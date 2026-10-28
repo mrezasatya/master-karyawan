@@ -75,7 +75,7 @@ class DemoSeeder extends Seeder
         });
 
         // Akun HR demo — password dari env DEMO_HR_PASSWORD atau dibuat acak dan ditampilkan sekali.
-        $hrPassword = env('DEMO_HR_PASSWORD') ?: $accounts->randomPassword().'!9';
+        $hrPassword = config('karyawan.demo_hr_password') ?: $accounts->randomPassword().'!9';
         UserAccount::create([
             'username' => 'HR0001', 'display_name' => 'HR Pusat (Demo)', 'role' => 'HR',
             'password_hash' => $hrPassword, 'must_change_password' => false, 'account_status' => 'Aktif',

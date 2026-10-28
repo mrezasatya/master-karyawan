@@ -16,6 +16,11 @@ return [
     */
     'password_awal' => env('KARYAWAN_PASSWORD_AWAL', 'tanggal_lahir'),
 
+    'force_https' => (bool) env('FORCE_HTTPS', false),
+
+    // Password akun HR demo pada seeder (hanya development). Kosong = dibuat acak.
+    'demo_hr_password' => env('DEMO_HR_PASSWORD'),
+
     // Batas waktu tidak aktif (menit) sebelum sesi berakhir otomatis.
     'idle_timeout' => (int) env('SESSION_LIFETIME', 30),
 
