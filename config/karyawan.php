@@ -57,6 +57,23 @@ return [
     ],
 
     /*
+    | Label jenjang pendidikan pada CV, mengikuti contoh template ("Diploma Graduate").
+    | Hapus baris untuk menampilkan kode jenjang apa adanya (mis. "D3").
+    */
+    'cv_education_labels' => [
+        'SD' => 'Elementary School',
+        'SMP' => 'Junior High School',
+        'SMA/SMK' => 'Senior High School',
+        'D1' => 'Diploma Graduate (D1)',
+        'D2' => 'Diploma Graduate (D2)',
+        'D3' => 'Diploma Graduate',
+        'D4' => 'Bachelor of Applied Science (D4)',
+        'S1' => 'Bachelor Degree',
+        'S2' => 'Master Degree',
+        'S3' => 'Doctoral Degree',
+    ],
+
+    /*
     |--------------------------------------------------------------------------
     | Pemetaan nilai lama (Excel) ke nilai terstandar
     |--------------------------------------------------------------------------

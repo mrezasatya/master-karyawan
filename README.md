@@ -25,7 +25,13 @@ Web app untuk menggantikan Excel sebagai **master data karyawan proyek** (501–
 
 Laravel 13 (PHP 8.3), Blade + Tailwind CSS 4 + Alpine.js, PostgreSQL (produksi) / SQLite (development), dompdf (PDF di server, tanpa Chrome), PhpSpreadsheet (Excel). Aset frontend hasil build sudah disertakan di `public/build`, sehingga server produksi **tidak memerlukan Node.js**.
 
-## 3. Menjalankan di komputer lokal
+## 3. Demo HTML (tanpa instalasi)
+
+Buka file `demo/index.html` langsung di browser (klik dua kali). Isinya demo interaktif dengan data fiktif yang meniru seluruh alur aplikasi: login HR/karyawan, wajib ganti password, dashboard kontrak, data karyawan, proyek, import Excel (file dibaca di browser dan tidak dikirim ke mana pun), CV Generator, akun, dan audit log. Data hanya tersimpan sementara di browser; muat ulang halaman mengembalikan data ke awal. Pembacaan file Excel memerlukan koneksi internet untuk memuat pustaka SheetJS dari cdnjs. Unduhan PDF/Excel hanya tersedia di aplikasi asli.
+
+Akun demo: HR `HR0001` / `demo123`. Akun karyawan dan password awalnya (tanggal lahir DDMMYY) ditampilkan di halaman login demo.
+
+## 4. Menjalankan di komputer lokal
 
 Prasyarat: PHP 8.3 (ekstensi `gd`, `zip`, `intl`, `mbstring`, `pdo_sqlite`/`pdo_pgsql`) dan Composer.
 
@@ -46,7 +52,7 @@ Buka http://localhost:8000. Seeder menampilkan kredensial demo di terminal:
 
 Mengubah tampilan (CSS/JS)? Jalankan `npm install && npm run build`, lalu commit folder `public/build`.
 
-## 4. Membuat akun HR pertama (lingkungan staging/produksi)
+## 5. Membuat akun HR pertama (lingkungan staging/produksi)
 
 Jangan memakai seeder demo. Buat akun HR melalui terminal server; password diketik secara privat dan tidak tersimpan di kode atau log:
 
@@ -57,7 +63,7 @@ php artisan karyawan:buat-hr <NIK_HR> --nama="Nama HR"
 
 Akun karyawan kemudian dibuat dari menu **Akun Pengguna** (satu per satu atau massal), atau dicentang saat proses import.
 
-## 5. Import Excel
+## 6. Import Excel
 
 **Format yang didukung:**
 1. **File master lama:** satu sheet, 32 kolom (`NIK, Nama, NamaPanggilan, JenisKelamin, …, email, Project`). Kolom `Project` diperlakukan sebagai penugasan utama (Aktif); `Pendidikan/Jurusan/Sekolah` menjadi satu riwayat pendidikan.
@@ -73,15 +79,17 @@ Akun karyawan kemudian dibuat dari menu **Akun Pengguna** (satu per satu atau ma
 - Kolom `Status` (mis. "Karyawan Proyek") disimpan sebagai **kategori karyawan**, terpisah dari `StatusKaryawan` (Aktif/Nonaktif). Profil baru tanpa `StatusKaryawan` diset **Aktif** (diberi tahu di preview).
 - `TahunLulus`, `Kewarganegaraan`, `Bahasa`, dan foto belum ada di file lama, sehingga perlu dilengkapi agar CV final dapat diunduh.
 
-## 6. CV
+## 7. CV
 
 - **Wajib untuk CV final:** nama, jenis kelamin, tanggal lahir, kewarganegaraan, jabatan, serta No. HP atau email. Bila belum lengkap, unduhan diblokir dan sistem tidak mengarang nilai.
 - **Peringatan:** foto, pendidikan (dan tahun lulus), pengalaman, bahasa, TRAINING.
 - Format: Date of Birth `Dec 04, 1993`, Sex `Male/Female`, pendidikan `Tahun - Jenjang - Jurusan - Institusi`, periode pengalaman `Mei 22 s/d Apr 24`. Pendidikan dan pengalaman diurutkan dari yang terbaru.
+- Tata letak diukur dari template resmi (letter, Arial/Helvetica): judul & heading 12pt bold, isi 10pt, tabel TRAINING 13,5pt, posisi logo/foto/kolom mengikuti template. Uraian tanggung jawab dicetak 9pt di bawah tiap pengalaman.
+- Jenjang pendidikan dicetak dengan label seperti template (D3 → "Diploma Graduate", S1 → "Bachelor Degree", dst.). Label dapat diubah di `config/karyawan.php` → `cv_education_labels`.
 - Tidak dicetak: KTP, BPJS, NPWP, KK, nama ibu, agama, golongan darah, tinggi/berat, status nikah, alamat, PTKP, tempat lahir, nomor/jenis sertifikat.
 - Template: `resources/views/cv/template.blade.php`. Logo: `public/images/logo-bukaka.png`.
 
-## 7. Konfigurasi penting (`.env`)
+## 8. Konfigurasi penting (`.env`)
 
 | Variabel | Fungsi |
 |---|---|
@@ -94,7 +102,7 @@ Akun karyawan kemudian dibuat dari menu **Akun Pengguna** (satu per satu atau ma
 
 Ambang kontrak, pilihan dropdown, batas foto, dan pemetaan nilai lama ada di `config/karyawan.php`.
 
-## 8. Backup & pemulihan
+## 9. Backup & pemulihan
 
 ```bash
 php artisan karyawan:backup
@@ -106,7 +114,7 @@ php artisan karyawan:restore storage/app/private/backups/backup-YYYYMMDD-HHMMSS.
 
 Backup berisi seluruh tabel (JSON) dan foto dalam satu ZIP di `storage/app/private/backups` (permission 600). Jadwal harian aktif bila server menjalankan cron `* * * * * php artisan schedule:run`. File backup berisi data pribadi, jadi simpan salinan di lokasi terbatas sesuai kebijakan IT. Untuk produksi disarankan **juga** memakai backup native database (`pg_dump`). Pemulihan sudah diuji otomatis (`tests/Feature/BackupTest.php`).
 
-## 9. Checklist untuk IT sebelum go-live
+## 10. Checklist untuk IT sebelum go-live
 
 - [ ] Lokasi hosting (data center/cloud perusahaan), domain, HTTPS, firewall/VPN
 - [ ] PostgreSQL produksi + akun DB khusus aplikasi; backup native + uji restore
@@ -119,7 +127,7 @@ Backup berisi seluruh tabel (JSON) dan foto dalam satu ZIP di `storage/app/priva
 - [ ] Persetujuan pemrosesan data asli sesuai kebijakan pelindungan data perusahaan
 - [ ] Penanggung jawab teknis dan operasional aplikasi
 
-## 10. Catatan keamanan dan keputusan desain
+## 11. Catatan keamanan dan keputusan desain
 
 - **Password awal = tanggal lahir (DDMMYY)** dipakai sesuai keputusan bisnis. Risikonya, tanggal lahir mudah diketahui orang lain. Mitigasinya: wajib ganti saat login pertama, rate limit login, password baru tidak boleh memuat tanggal lahir/NIK, dan status "belum diganti" terlihat di menu Akun. Selama akun belum diganti password-nya, siapa pun yang tahu NIK dan tanggal lahir dapat masuk lebih dulu. Karena itu, **bagikan akun secara bertahap dan minta karyawan segera login**. Alternatif yang lebih aman cukup diaktifkan lewat `KARYAWAN_PASSWORD_AWAL=acak`.
 - Akun HR selalu memakai password acak/privat; tidak ada kredensial di repository.
@@ -129,7 +137,7 @@ Backup berisi seluruh tabel (JSON) dan foto dalam satu ZIP di `storage/app/priva
 - Halaman yang berisi data pribadi dikirim dengan `Cache-Control: no-store`. Form tidak disimpan di `localStorage`.
 - Foto disimpan privat, di-encode ulang (metadata EXIF terhapus), dan hanya dapat dibuka HR yang login.
 
-## 11. Pengujian
+## 12. Pengujian
 
 ```bash
 php artisan test
@@ -137,6 +145,6 @@ php artisan test
 
 Terdapat 35 feature test yang mencakup kriteria penerimaan MVP: hak akses backend, NIK unik dan leading zero, import (preview, duplikat, invalid, sel kosong, round-trip export→import), multi-proyek, validasi pengalaman, CV tanpa data sensitif dan multi-halaman, dashboard kontrak, serta backup/restore. CI GitHub Actions menjalankan test di SQLite dan PostgreSQL.
 
-## 12. Di luar cakupan MVP
+## 13. Di luar cakupan MVP
 
 Payroll, absensi, rekrutmen, penilaian kinerja, persetujuan berjenjang, notifikasi email/WhatsApp, banyak desain CV, mode offline penuh, dan riwayat kontrak lengkap.

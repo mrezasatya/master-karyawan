@@ -36,9 +36,11 @@ class CvTest extends TestCase
         $html = $this->actingAs($this->hr())->get(route('cv.preview', $e))->assertOk()->getContent();
 
         foreach (['CURRICULUM VITAE OF PERSONNEL', 'Bagus Contoh', 'Male', 'Dec 04, 1993', 'Indonesian', 'Supervisor', '082314906247', 'Bahasa Indonesia',
-            '2016 - D3 - Civil Engineering - Universitas Diponegoro', 'Mei 22 s/d Apr 24', 'Supervisor di Project CSP IKN', 'ISO 9001', 'BLI - Lembaga', 'TAHUN', 'PENYELENGGARA'] as $expected) {
+            '2016 - Diploma Graduate - Civil Engineering - Universitas Diponegoro', 'Supervisor di Project CSP IKN', 'ISO 9001', 'BLI - Lembaga', 'TAHUN', 'PENYELENGGARA'] as $expected) {
             $this->assertStringContainsString($expected, $html);
         }
+        $this->assertMatchesRegularExpression('#Mei 22</td>\s*<td class="sd">s/d</td>\s*<td class="end">Apr 24</td>#', $html);
+
         // Bandingkan dengan teks yang terlihat (tanpa CSS dan gambar base64).
         $text = strip_tags(preg_replace('#<style.*?</style>#s', '', $html));
         foreach (['3201999988887777', '01.234.567.8-999.000', 'BPJSTK123', 'BPJSKES456', '3201000011112222', 'Siti Ibunda', 'Islam', 'Jl. Rahasia', 'Menikah', 'K1', '171', '68.5', 'Kotarahasia', 'CERT-SECRET-1', 'Sertifikasi'] as $secret) {

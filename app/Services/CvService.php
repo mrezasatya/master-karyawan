@@ -57,6 +57,7 @@ class CvService
             'e' => $employee,
             'logo' => 'data:image/png;base64,'.base64_encode(file_get_contents(public_path('images/logo-bukaka.png'))),
             'photo' => Photo::dataUri($employee->foto_path),
+            'cvLevel' => fn (?string $level) => config('karyawan.cv_education_labels')[$level] ?? $level,
             'personal' => [
                 'Name' => $employee->nama,
                 'Sex' => Format::cvSex($employee->jenis_kelamin),

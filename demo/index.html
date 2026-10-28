@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Demo Master Karyawan Bukaka</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: sidebar navigasi (desktop) / menu atas (HP) + area kerja, meniru aplikasi Laravel aslinya. */
+:root {
+  --brand: #006599; --brand-700: #00527c; --brand-50: #e8f3f9; --brand-100: #cfe5f1;
+  --bg: #f5f8fa; --surface: #ffffff; --fg: #1c2a36; --muted: #5d6f7e; --line: #dde5eb; --soft: #eef3f6;
+  --ok: #157a3c; --ok-bg: #dcf3e4; --warn: #8a5a00; --warn-bg: #fdf0cc; --orange: #9a4210; --orange-bg: #fde3cf;
+  --bad: #b42318; --bad-bg: #fde4e1;
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 14px/1.5 var(--font); }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--brand-700); }
+.demo-bar { background: var(--brand); color: #fff; font-size: 12.5px; padding-block: 7px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+.demo-bar button { background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35); color: #fff; border-radius: 6px; padding: 3px 10px; cursor: pointer; font-size: 12px; }
+.shell { display: flex; min-height: calc(100vh - 34px); }
+aside { width: 236px; flex: none; background: var(--surface); border-right: 1px solid var(--line); }
+aside .brand { height: 60px; display: flex; align-items: center; padding: 0 20px; border-bottom: 1px solid var(--line); }
+aside .brand img { height: 22px; }
+nav { padding: 10px; display: grid; gap: 2px; }
+nav a { display: flex; align-items: center; min-height: 42px; padding: 0 12px; border-radius: 8px; text-decoration: none; color: var(--muted); font-weight: 500; }
+nav a:hover { background: var(--soft); }
+nav a.active { background: var(--brand-50); color: var(--brand-700); }
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+header.top { height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--surface); border-bottom: 1px solid var(--line); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.top .who { text-align: right; line-height: 1.2; }
+header.top .who b { display: block; font-size: 13.5px; max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+header.top .who span { font-size: 12px; color: var(--muted); }
+.btn.menu-btn, .m-logo { display: none; }
+.content { width: 100%; max-width: 1200px; margin: 0 auto; padding-block: 24px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+@media (max-width: 900px) {
+  aside { position: fixed; z-index: 40; inset: 0 auto 0 0; transform: translateX(-100%); transition: transform .2s; padding-top: env(safe-area-inset-top, 0px); }
+  aside.open { transform: none; box-shadow: 0 10px 40px rgba(0,0,0,.2); }
+  .btn.menu-btn { display: inline-flex; }
+  .m-logo { display: block; height: 16px; }
+  .scrim { position: fixed; inset: 0; background: rgba(15,30,45,.35); z-index: 30; }
+}
+@media (prefers-reduced-motion: reduce) { aside { transition: none; } }
+
+h1 { font-size: 22px; line-height: 1.25; margin: 0; text-wrap: balance; }
+h2 { font-size: 16px; margin: 0 0 4px; }
+h3 { font-size: 14.5px; margin: 0 0 8px; }
+.sub { color: var(--muted); font-size: 13px; margin: 4px 0 0; }
+.page-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.back { display: inline-block; margin-bottom: 6px; font-size: 13px; font-weight: 500; text-decoration: none; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+.stack { display: grid; gap: 16px; }
+.grid { display: grid; gap: 14px; }
+.g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.span2 { grid-column: span 2; } .span3 { grid-column: span 3; } .spanall { grid-column: 1 / -1; }
+@media (max-width: 760px) { .g2, .g3, .g4 { grid-template-columns: minmax(0, 1fr); } .span2, .span3 { grid-column: auto; } .tiles.g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 42px; padding: 8px 16px; border-radius: 8px; border: 1px solid transparent; font-weight: 600; font-size: 13.5px; cursor: pointer; text-decoration: none; white-space: nowrap; }
+.btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, nav a:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.btn.primary { background: var(--brand); color: #fff; } .btn.primary:hover { background: var(--brand-700); }
+.btn.secondary { background: var(--surface); border-color: #c5d1da; color: var(--fg); } .btn.secondary:hover { background: var(--soft); }
+.btn.danger { background: var(--bad); color: #fff; }
+.btn.ghost { background: transparent; color: var(--brand-700); } .btn.ghost:hover { background: var(--brand-50); }
+.btn.sm { min-height: 32px; padding: 4px 10px; font-size: 12.5px; }
+.btn.red { color: var(--bad); }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.btn.block { width: 100%; }
+label.l { display: block; font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+.req { color: var(--bad); }
+.in { display: block; width: 100%; min-height: 42px; padding: 8px 11px; border: 1px solid #c5d1da; border-radius: 8px; background: var(--surface); }
+textarea.in { min-height: 90px; resize: vertical; }
+.in.err { border-color: var(--bad); }
+.ferr { color: var(--bad); font-size: 12.5px; margin-top: 4px; }
+.help { color: var(--muted); font-size: 12px; margin-top: 4px; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; }
+.check input { width: 18px; height: 18px; margin-top: 2px; flex: none; }
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+legend { font-weight: 600; font-size: 15px; margin-bottom: 10px; padding: 0; }
+.tw { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+table.t { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.t th { background: #f3f7f9; text-align: left; font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); padding: 9px 12px; white-space: nowrap; }
+.t td { padding: 9px 12px; border-top: 1px solid var(--soft); vertical-align: top; }
+.t .r { text-align: right; } .nw { white-space: nowrap; }
+.mono { font-family: var(--mono); font-size: 12.5px; }
+.num { font-variant-numeric: tabular-nums; }
+.empty { text-align: center; color: var(--muted); padding: 28px 12px !important; }
+.badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 1px 9px; font-size: 12px; font-weight: 500; white-space: nowrap; background: var(--soft); color: var(--muted); }
+.b-ok { background: var(--ok-bg); color: var(--ok); } .b-warn { background: var(--warn-bg); color: var(--warn); }
+.b-orange { background: var(--orange-bg); color: var(--orange); } .b-bad { background: var(--bad-bg); color: var(--bad); }
+.b-blue { background: var(--brand-100); color: var(--brand-700); }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; text-decoration: none; color: inherit; display: block; }
+.tile:hover { border-color: var(--brand); }
+.tile small { color: var(--muted); font-size: 12px; } .tile b { display: block; font-size: 26px; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.alert { border-radius: 10px; padding: 11px 14px; font-size: 13.5px; border: 1px solid; }
+.a-ok { background: var(--ok-bg); border-color: #b4e2c4; color: var(--ok); }
+.a-warn { background: var(--warn-bg); border-color: #f1d98a; color: var(--warn); }
+.a-bad { background: var(--bad-bg); border-color: #f5b8b0; color: var(--bad); }
+.a-info { background: var(--brand-50); border-color: var(--brand-100); color: var(--brand-700); }
+.tabs { display: flex; gap: 2px; overflow-x: auto; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+.tabs button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 0 12px; min-height: 44px; color: var(--muted); font-weight: 500; cursor: pointer; white-space: nowrap; }
+.tabs button.on { border-color: var(--brand); color: var(--brand-700); }
+.item { border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: flex; gap: 12px; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; }
+.item > div:first-child { min-width: 0; flex: 1 1 240px; }
+.addbox { background: #f3f7f9; border-radius: 10px; padding: 14px; }
+.meta { color: #8797a4; font-size: 12px; margin-top: 6px; }
+.status { font-size: 13px; min-height: 20px; }
+.s-ok { color: var(--ok); font-weight: 600; } .s-bad { color: var(--bad); font-weight: 600; } .s-busy { color: var(--brand-700); }
+.dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.dl dt { color: var(--muted); font-size: 12.5px; } .dl dd { margin: 0; font-weight: 600; }
+@media (max-width: 560px) { .dl { grid-template-columns: minmax(0, 1fr); } }
+.auth { min-height: calc(100vh - 34px); display: flex; align-items: center; justify-content: center; padding-block: 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.auth .box { width: 100%; max-width: 380px; }
+.auth .logo { text-align: center; margin-bottom: 26px; } .auth .logo img { height: 34px; } .auth .logo p { color: var(--muted); margin: 10px 0 0; font-size: 13px; }
+.pw { position: relative; } .pw button { position: absolute; right: 4px; top: 4px; bottom: 4px; border: 0; background: none; color: var(--brand-700); font-weight: 600; font-size: 12.5px; cursor: pointer; padding: 0 8px; }
+.cred { font-family: var(--mono); background: var(--surface); border: 1px solid var(--line); padding: 1px 6px; border-radius: 5px; user-select: all; }
+.modal-wrap { position: fixed; inset: 0; z-index: 60; background: rgba(15,30,45,.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.modal { background: var(--surface); border-radius: 14px; max-width: 440px; width: 100%; padding: 20px; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+.toast { position: fixed; z-index: 70; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); background: #10324a; color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 13.5px; max-width: calc(100% - 32px); box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+.photo-ph { width: 150px; aspect-ratio: 3/4; max-width: 100%; border: 2px dashed #c5d1da; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #8797a4; font-size: 13px; text-align: center; }
+.photo-img { width: 150px; aspect-ratio: 3/4; max-width: 100%; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); }
+@media (max-width: 760px) { #prjgrid { grid-template-columns: minmax(0, 1fr) !important; } }
+.cvgrid { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 900px) { .cvgrid { grid-template-columns: minmax(0, 1fr); } }
+.ck li { display: flex; gap: 8px; align-items: baseline; padding: 3px 0; font-size: 13.5px; } .ck { list-style: none; padding: 0; margin: 0; }
+.ck .y { color: var(--ok); } .ck .n { color: var(--bad); font-weight: 600; } .ck .w { color: var(--warn); }
+.cv-stage { background: #d9e1e7; border-radius: 12px; padding: 16px; overflow: hidden; }
+.cv-scale { transform-origin: top left; }
+.chg del { color: var(--bad); } .chg ins { color: var(--ok); text-decoration: none; }
+
+/* ===== Replika template CV Bukaka (ukuran dalam pt, letter 612pt) ===== */
+.cv { width: 612pt; min-height: 792pt; background: #fff; color: #000; font: 10pt/13.5pt Helvetica, Arial, sans-serif; padding: 45pt 48pt 45pt 43pt; box-shadow: 0 4px 18px rgba(0,0,0,.18); }
+.cv table { border-collapse: collapse; } .cv td, .cv th { padding: 0; vertical-align: top; text-align: left; font-weight: normal; }
+.cv .hdr { position: relative; height: 64.5pt; }
+.cv .lg { position: absolute; left: 4pt; top: 5pt; width: 137pt; }
+.cv .ttl { position: absolute; left: 154pt; top: 16pt; font: bold 12pt/14pt Helvetica, Arial, sans-serif; white-space: nowrap; }
+.cv .ph { position: absolute; right: 0; top: 0; width: 81pt; height: 103pt; object-fit: cover; }
+.cv h4 { font: bold 12pt/14pt Helvetica, Arial, sans-serif; margin: 0; }
+.cv .hp { margin-left: 2pt; } .cv .pers { margin-top: 10.5pt; } .cv .pers td { height: 13.5pt; }
+.cv .c1 { width: 11pt; } .cv .c2 { width: 124pt; } .cv .c3 { width: 13.6pt; }
+.cv .he { margin: 21.2pt 0 0 1.4pt; } .cv .edu { margin: 4pt 0 0 1.3pt; } .cv .edu p { margin: 0; }
+.cv .hx { margin: 8pt 0 0 .2pt; } .cv .exp { margin: 2pt 0 0 1.3pt; } .cv .exp td { line-height: 14.1pt; }
+.cv .xs { width: 35.1pt; white-space: nowrap; } .cv .xd { width: 21.9pt; } .cv .xe { width: 46pt; padding-right: 3pt; white-space: nowrap; }
+.cv .resp { font-size: 9pt; line-height: 11.5pt; padding-bottom: 3pt; white-space: pre-line; }
+.cv .trn { width: 100%; margin: 3.8pt 0 0 -1.2pt; }
+.cv .trn th { font-size: 13.5pt; line-height: 16pt; } .cv .trn th.sj { font: bold 12pt/16pt Helvetica, Arial, sans-serif; }
+.cv .tn { width: 210pt; padding-left: 1.9pt; } .cv .ty { width: 47pt; text-align: center !important; } .cv .to { padding-left: 83pt; } .cv th.to { padding-left: 91.4pt; }
+.cv .trn td { font-size: 13.5pt; line-height: 16pt; padding-top: 12.7pt; padding-bottom: 2.3pt; }
+.cv .trn td.ty { padding-top: 15pt; padding-bottom: 0; } .cv .trn td.to { padding-top: 14.4pt; padding-bottom: .6pt; }
+.cv .mu { color: #555; }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(() => {
+'use strict';
+const LOGO = 'data:image/png;base64,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';
+
+/* ---------- utilitas ---------- */
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const TODAY = new Date(); TODAY.setHours(0, 0, 0, 0);
+const pad = n => String(n).padStart(2, '0');
+const iso = d => d ? `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` : '';
+const parseISO = s => { if (!s) return null; const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = n => { const d = new Date(TODAY); d.setDate(d.getDate() + n); return iso(d); };
+const MS = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+const MONTHS = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+const EN = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const fmtDate = s => { const d = parseISO(s); return d ? `${pad(d.getDate())} ${MS[d.getMonth() + 1]} ${d.getFullYear()}` : '-'; };
+const fmtDT = d => d ? `${pad(d.getDate())} ${MS[d.getMonth() + 1]} ${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}` : '-';
+const cvDate = s => { const d = parseISO(s); return d ? `${EN[d.getMonth() + 1]} ${pad(d.getDate())}, ${d.getFullYear()}` : ''; };
+const my = (m, y) => (m && y) ? `${MS[m]} ${String(y).slice(-2)}` : '-';
+const daysLeft = s => { const d = parseISO(s); return d ? Math.round((d - TODAY) / 864e5) : null; };
+const ddmmyy = s => { const d = parseISO(s); return d ? pad(d.getDate()) + pad(d.getMonth() + 1) + String(d.getFullYear()).slice(-2) : ''; };
+const nowYear = TODAY.getFullYear();
+let seed = 2026; const rnd = () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
+const pick = a => a[Math.floor(rnd() * a.length)];
+const between = (a, b) => a + Math.floor(rnd() * (b - a + 1));
+
+const OPT = {
+  jk: ['Laki-laki', 'Perempuan'], agama: ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu', 'Lainnya'],
+  nikah: ['Belum Menikah', 'Menikah', 'Cerai Hidup', 'Cerai Mati'], darah: ['A', 'B', 'AB', 'O', 'Tidak diketahui'],
+  ptkp: ['TK0', 'TK1', 'TK2', 'TK3', 'K0', 'K1', 'K2', 'K3', 'KI0', 'KI1', 'KI2', 'KI3'],
+  level: ['SD', 'SMP', 'SMA/SMK', 'D1', 'D2', 'D3', 'D4', 'S1', 'S2', 'S3', 'Lainnya'],
+  lang: ['Bahasa Indonesia', 'Bahasa Inggris'], expType: ['Sebelum bergabung', 'Selama bekerja'],
+  trnType: ['Pelatihan', 'Sertifikasi', 'Kompetensi'],
+};
+const CV_LEVEL = { SD: 'Elementary School', SMP: 'Junior High School', 'SMA/SMK': 'Senior High School', D1: 'Diploma Graduate (D1)', D2: 'Diploma Graduate (D2)', D3: 'Diploma Graduate', D4: 'Bachelor of Applied Science (D4)', S1: 'Bachelor Degree', S2: 'Master Degree', S3: 'Doctoral Degree' };
+const ALIAS = {
+  jk: { l: 'Laki-laki', lk: 'Laki-laki', 'laki laki': 'Laki-laki', 'laki-laki': 'Laki-laki', pria: 'Laki-laki', male: 'Laki-laki', p: 'Perempuan', pr: 'Perempuan', perempuan: 'Perempuan', wanita: 'Perempuan', female: 'Perempuan' },
+  agama: { katholik: 'Katolik', katolik: 'Katolik', protestan: 'Kristen', kristen: 'Kristen', islam: 'Islam', hindu: 'Hindu', budha: 'Buddha', buddha: 'Buddha', konghucu: 'Konghucu', khonghucu: 'Konghucu' },
+  nikah: { 'belum menikah': 'Belum Menikah', 'belum kawin': 'Belum Menikah', lajang: 'Belum Menikah', menikah: 'Menikah', kawin: 'Menikah', 'cerai hidup': 'Cerai Hidup', 'cerai mati': 'Cerai Mati' },
+  darah: { a: 'A', b: 'B', ab: 'AB', o: 'O', '-': 'Tidak diketahui' },
+  level: { sd: 'SD', smp: 'SMP', sltp: 'SMP', sma: 'SMA/SMK', smk: 'SMA/SMK', smu: 'SMA/SMK', stm: 'SMA/SMK', slta: 'SMA/SMK', 'sma/smk': 'SMA/SMK', d1: 'D1', d2: 'D2', d3: 'D3', d4: 'D4', s1: 'S1', s2: 'S2', s3: 'S3' },
+};
+
+/* ---------- data dummy (fiktif) ---------- */
+const NAMES = ['Puji Nurdiyanti', 'Bagus Hairyanto', 'Jasmin Kusmawati', 'Andi Pratama', 'Rina Wulandari', 'Dedi Setiawan', 'Siti Marlina', 'Agus Salim', 'Fajar Nugroho', 'Lestari Handayani', 'Yoga Permana', 'Dewi Anggraini', 'Hendra Gunawan', 'Maya Sari', 'Rizky Ramadhan', 'Nur Aisyah', 'Teguh Santoso', 'Indah Purnamasari', 'Bayu Saputra', 'Wulan Oktaviani', 'Arif Hidayat', 'Ratna Kurnia', 'Eko Prasetyo', 'Fitri Yuliani', 'Galih Wicaksono', 'Herlina Simanjuntak', 'Irfan Maulana', 'Kartika Dewi', 'Lukman Hakim', 'Mega Puspita', 'Nanda Kurniawan', 'Oki Firmansyah', 'Putri Ayu', 'Rahmat Hidayat', 'Sinta Lestari', 'Taufik Ismail', 'Umar Said', 'Vina Melati', 'Wahyu Hidayat', 'Yulia Rahman'];
+const JOBS = ['Site Engineer', 'HSE Officer', 'QC Inspector', 'Supervisor Site', 'Welder', 'Surveyor', 'Project Admin', 'Mechanical Engineer'];
+const CITIES = ['Bogor', 'Bekasi', 'Bandung', 'Semarang', 'Surabaya', 'Kediri', 'Wonogiri', 'Medan', 'Makassar', 'Depok'];
+const SCHOOLS = [['S1', 'Teknik Sipil', 'Universitas Diponegoro'], ['D3', 'Teknik Mesin', 'Politeknik Negeri Bandung'], ['SMA/SMK', 'Teknik Las', 'SMKN 1 Cibinong'], ['S1', 'Teknik Elektro', 'Institut Teknologi Sepuluh Nopember'], ['S2', 'Manajemen Proyek', 'Universitas Indonesia']];
+const TRAININGS = [['Sertifikasi', 'Ahli K3 Umum', 'Kemnaker RI'], ['Pelatihan', 'ISO 9001:2015 Awareness', 'BLI - Lembaga Pelatihan'], ['Kompetensi', 'Juru Las 3G SMAW', 'LSP Logam'], ['Pelatihan', 'Project Management Fundamental', 'PT Pelatihan Nusantara'], ['Sertifikasi', 'Non-Destructive Test Level II', 'PT Inspeksi Teknik']];
+
+const S = {
+  projects: [], employees: [], accounts: [], audit: [], imports: [], seq: 1000,
+  user: null, view: 'dashboard', detailId: null, tab: 'identitas', cvId: null, menu: false,
+  f: { q: '', status: '', project: '', kontrak: '', page: 1 }, cvq: '', accq: '',
+  errs: {}, formKey: null, modal: null, toast: null, weak: false, preview: null, lastResult: null,
+};
+const nextId = () => ++S.seq;
+
+function seedData() {
+  [['PRJ-OKI', 'Project OKI'], ['PRJ-GRT', 'SUTET 500KV Grati - Pasuruan'], ['PRJ-HGR', 'Project Hanggar'], ['PRJ-IKN', 'Project CSP IKN'], ['PRJ-CH', 'Project Callender Hamilton'], ['PRJ-JTT', 'Jembatan Tol Trans Jawa']]
+    .forEach(([c, n]) => S.projects.push({ id: nextId(), code: c, name: n, status: 'Aktif' }));
+  S.projects.push({ id: nextId(), code: 'PRJ-OLD', name: 'Gedung Workshop Cileungsi (selesai)', status: 'Nonaktif' });
+  const contractOffsets = [9, 13, 18, 41, 54, 61, 69, -6];
+  NAMES.forEach((nama, i) => {
+    const female = ['Puji', 'Jasmin', 'Rina', 'Siti', 'Lestari', 'Dewi', 'Maya', 'Nur', 'Indah', 'Wulan', 'Ratna', 'Fitri', 'Herlina', 'Kartika', 'Mega', 'Putri', 'Sinta', 'Vina', 'Yulia'].includes(nama.split(' ')[0]);
+    const job = pick(JOBS);
+    const masukY = between(2017, 2025);
+    const e = {
+      id: nextId(), nik: String(1000 + i).padStart(6, '0'), nama, panggilan: '', jk: female ? 'Perempuan' : 'Laki-laki', kode_jbt: pick(['Staf', 'Section Head', 'Supervisor']),
+      jobtitle: job, kategori: 'Karyawan Proyek', status_awal: '', tgl_masuk: `${masukY}-${pad(between(1, 12))}-${pad(between(1, 28))}`, kontrak_ke: String(between(1, 4)),
+      akhir_kontrak: i < contractOffsets.length ? addDays(contractOffsets[i]) : addDays(between(95, 420)), status: i % 17 === 16 ? 'Nonaktif' : 'Aktif',
+      tgl_lahir: `${between(1972, 2000)}-${pad(between(1, 12))}-${pad(between(1, 28))}`, tempat_lahir: pick(CITIES), kewarganegaraan: i % 11 === 5 ? '' : 'Indonesian',
+      alamat: `Jl. Contoh No. ${between(1, 99)}, ${pick(CITIES)}`, darah: pick(OPT.darah), tinggi: between(155, 182), berat: between(50, 85), agama: pick(OPT.agama.slice(0, 5)),
+      ktp: '3201' + String(between(100000000000, 999999999999)), bpjs_tk: String(between(10000000000, 99999999999)), nikah: pick(['Belum Menikah', 'Menikah']),
+      npwp: '', bpjs_kes: String(between(1000000000000, 9999999999999)), kk: '3201' + String(between(100000000000, 999999999999)), ibu: 'Ibu ' + pick(['Sutinah', 'Mariam', 'Rohana', 'Sulastri']),
+      ptkp: pick(['TK0', 'K0', 'K1', 'K2']), hp: '08' + String(between(1000000000, 9999999999)), email: nama.toLowerCase().replace(/[^a-z]+/g, '.') + '@contoh.co.id', foto: null,
+      education: [], languages: ['Bahasa Indonesia'], trainings: [], experiences: [], assignments: [], updated: new Date(), created: new Date(),
+    };
+    if (i % 3 === 0) e.languages.push('Bahasa Inggris');
+    const [lv, mj, sc] = SCHOOLS[i % SCHOOLS.length];
+    e.education.push({ id: nextId(), level: lv, major: mj, institution: sc, year: i % 9 === 4 ? null : between(1995, 2018) });
+    e.assignments.push({ id: nextId(), projectId: S.projects[i % 6].id, start: e.tgl_masuk, end: '', status: 'Aktif' });
+    if (i % 5 === 0) e.assignments.push({ id: nextId(), projectId: S.projects[(i + 2) % 6].id, start: addDays(-90), end: '', status: 'Aktif' });
+    const nt = i % 4 === 3 ? 0 : between(1, 4);
+    TRAININGS.slice(0, nt).forEach(([t, n, o]) => e.trainings.push({ id: nextId(), type: t, name: n, year: between(2018, nowYear), org: o, cert: '', issue: '', expiry: '' }));
+    const sy = between(2008, 2014);
+    e.experiences.push({ id: nextId(), type: 'Sebelum bergabung', company: 'PT ' + pick(['Wasita', 'Nusantara', 'Karya Mandiri', 'Baja Utama']) + ' Konstruksi', project: '', position: job, sm: between(1, 12), sy, em: between(1, 12), ey: sy + 2, current: false, resp: `Melaksanakan pekerjaan ${job.toLowerCase()} sesuai gambar kerja dan standar K3.`, by: 'HR Pusat (Demo)', at: new Date() });
+    e.experiences.push({ id: nextId(), type: 'Selama bekerja', company: 'PT Bukaka Teknik Utama', project: S.projects[i % 6].name, position: job, sm: Number(e.tgl_masuk.slice(5, 7)), sy: masukY, em: null, ey: null, current: true, resp: 'Bertanggung jawab atas pelaksanaan pekerjaan di lapangan, pelaporan harian, dan koordinasi dengan tim proyek.', by: 'HR Pusat (Demo)', at: new Date() });
+    S.employees.push(e);
+  });
+  S.accounts.push({ id: nextId(), username: 'HR0001', name: 'HR Pusat (Demo)', role: 'HR', employeeId: null, pw: 'demo123', must: false, status: 'Aktif', last: null });
+  S.employees.filter(e => e.status === 'Aktif').slice(0, 10).forEach(e => S.accounts.push({ id: nextId(), username: e.nik, role: 'Karyawan', employeeId: e.id, pw: ddmmyy(e.tgl_lahir), must: true, status: 'Aktif', last: null }));
+}
+
+/* ---------- helper domain ---------- */
+const emp = id => S.employees.find(e => e.id === id);
+const prj = id => S.projects.find(p => p.id === id);
+const accOf = e => S.accounts.find(a => a.employeeId === e.id);
+const accName = a => a.employeeId ? emp(a.employeeId).nama : a.name;
+const activeProjects = e => e.assignments.filter(a => a.status === 'Aktif').map(a => prj(a.projectId)?.name).filter(Boolean);
+const actor = () => S.user ? accName(S.user) : 'Tamu';
+function log(entity, id, action, fields) { S.audit.unshift({ t: new Date(), actor: actor(), entity, id, action, fields: fields || [] }); }
+function reminder(e) {
+  const d = daysLeft(e.akhir_kontrak); if (d === null) return null;
+  if (d < 0) return ['Lewat tanggal kontrak', 'b-bad']; if (d <= 30) return ['≤ 30 hari', 'b-orange']; if (d <= 60) return ['≤ 60 hari', 'b-warn']; if (d <= 90) return ['≤ 90 hari', 'b-blue'];
+  return null;
+}
+const badge = (t, c = '') => `<span class="badge ${c}">${esc(t)}</span>`;
+const stBadge = s => badge(s, s === 'Aktif' ? 'b-ok' : '');
+const remBadge = e => { const r = reminder(e); return r ? badge(r[0], r[1]) : ''; };
+function toast(msg) { S.toast = msg; render(); clearTimeout(toast.t); toast.t = setTimeout(() => { S.toast = null; render(); }, 3800); }
+function confirmBox(title, body, label, onOk, danger) { S.modal = { title, body, label, onOk, danger }; render(); }
+
+/* ---------- field builder ---------- */
+const errOf = n => S.errs[n];
+const dv = (form, name, def = '') => (S.formKey === form && S.draft) ? (S.draft[name] ?? '') : def;
+function field(name, label, value, o = {}) {
+  const id = 'f-' + (o.key || '') + name; const e = errOf(name);
+  const attrs = Object.entries(o.attrs || {}).map(([k, v]) => `${k}="${esc(v)}"`).join(' ');
+  let input;
+  if (o.options) {
+    const opts = (o.placeholder === false ? '' : `<option value="">${esc(o.placeholder || '— Pilih —')}</option>`) +
+      o.options.map(op => { const [v, t] = Array.isArray(op) ? op : [op, op]; return `<option value="${esc(v)}" ${String(v) === String(value ?? '') ? 'selected' : ''}>${esc(t)}</option>`; }).join('');
+    input = `<select id="${id}" name="${name}" class="in ${e ? 'err' : ''}" ${attrs}>${opts}</select>`;
+  } else if (o.type === 'textarea') {
+    input = `<textarea id="${id}" name="${name}" class="in ${e ? 'err' : ''}" ${attrs}>${esc(value)}</textarea>`;
+  } else {
+    input = `<input id="${id}" name="${name}" type="${o.type || 'text'}" value="${esc(value)}" class="in ${e ? 'err' : ''}" ${attrs}>`;
+  }
+  return `<div class="${o.cls || ''}">${label ? `<label class="l" for="${id}">${esc(label)}${o.req ? ' <span class="req">*</span>' : ''}</label>` : ''}${input}${e ? `<div class="ferr">${esc(e)}</div>` : (o.help ? `<div class="help">${esc(o.help)}</div>` : '')}</div>`;
+}
+const formData = form => Object.fromEntries([...new FormData(form).entries()].map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v]));
+
+/* ---------- validasi ---------- */
+function validateEmployee(d, current, fields) {
+  const er = {}; const has = f => fields.includes(f);
+  if (has('nik')) { if (!d.nik) er.nik = 'NIK wajib diisi.'; else if (S.employees.some(x => x.nik === d.nik && x !== current)) er.nik = 'NIK sudah terdaftar. Buka profil yang sudah ada untuk mengubah datanya.'; }
+  if (has('nama') && !d.nama) er.nama = 'Nama wajib diisi.';
+  if (has('jk') && !d.jk) er.jk = 'Jenis kelamin wajib diisi.';
+  if (has('jobtitle') && !d.jobtitle) er.jobtitle = 'Job title wajib diisi.';
+  if (has('tgl_masuk') && !d.tgl_masuk) er.tgl_masuk = 'Tanggal masuk wajib diisi.';
+  if (has('tgl_lahir') && d.tgl_lahir && parseISO(d.tgl_lahir) > TODAY) er.tgl_lahir = 'Tanggal lahir tidak boleh di masa depan.';
+  const masuk = has('tgl_masuk') ? d.tgl_masuk : current?.tgl_masuk;
+  if (has('akhir_kontrak') && d.akhir_kontrak && masuk && d.akhir_kontrak < masuk) er.akhir_kontrak = 'Akhir kontrak tidak boleh sebelum tanggal masuk.';
+  if (has('email') && d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) er.email = 'Email harus berupa alamat email yang valid.';
+  if (has('hp') && d.hp) { d.hp = (d.hp.startsWith('+') ? '+' : '') + d.hp.replace(/\D/g, ''); if (!/^\+?\d{8,16}$/.test(d.hp)) er.hp = 'No. HP harus 8–16 digit angka (boleh diawali +).'; }
+  ['ktp', 'kk'].forEach(f => { if (has(f) && d[f] && /^\d+$/.test(d[f]) && d[f].length !== 16) er[f] = `${f === 'ktp' ? 'No. KTP' : 'No. KK'} berupa angka harus 16 digit (saat ini ${d[f].length} digit).`; });
+  return er;
+}
+function validateExperience(d) {
+  const er = {}; const max = d.confirm_future ? nowYear + 5 : nowYear; const cur = !!d.current;
+  if (!d.type) er.type = 'Jenis pengalaman wajib diisi.';
+  if (!d.position) er.position = 'Jabatan wajib diisi.';
+  if (!d.company) er.company = 'Nama perusahaan wajib diisi.';
+  if (!d.sm || !d.sy) er.start = 'Bulan dan tahun mulai wajib diisi.';
+  else if (d.sy < 1950 || d.sy > max) er.start = d.sy > nowYear ? 'Tahun mulai melewati tahun berjalan. Centang konfirmasi bila memang benar.' : 'Tahun mulai tidak valid.';
+  if (!cur) {
+    if (!d.em || !d.ey) er.end = 'Bulan dan tahun selesai wajib diisi, atau centang "Masih bekerja di sini".';
+    else if (d.ey < 1950 || d.ey > max) er.end = d.ey > nowYear ? 'Tahun selesai melewati tahun berjalan. Centang konfirmasi bila memang benar.' : 'Tahun selesai tidak valid.';
+    else if (!er.start && d.sy * 12 + d.sm > d.ey * 12 + d.em) er.end = 'Periode selesai tidak boleh sebelum periode mulai.';
+  }
+  if ((d.resp || '').length > 2000) er.resp = 'Uraian maksimal 2000 karakter.';
+  return er;
+}
+
+/* ---------- tampilan: login ---------- */
+function viewLogin() {
+  const k = S.accounts.find(a => a.role === 'Karyawan' && a.must && a.status === 'Aktif');
+  const ke = k && emp(k.employeeId);
+  return `<div class="auth"><div class="box">
+    <div class="logo"><img src="${LOGO}" alt="Bukaka"><p>Master Data Karyawan Proyek</p></div>
+    <div class="card stack">
+      <div><h2>Masuk</h2><p class="sub">Gunakan NIK sebagai username.</p></div>
+      ${S.loginErr ? `<div class="alert a-bad">${esc(S.loginErr)}</div>` : ''}
+      <form data-form="login" class="stack" autocomplete="off">
+        ${field('username', 'Username / NIK', S.loginUser || '', { req: true })}
+        <div><label class="l" for="f-password">Password <span class="req">*</span></label>
+          <div class="pw"><input id="f-password" name="password" type="password" class="in"><button type="button" data-act="togglepw">Tampilkan</button></div></div>
+        <button class="btn primary block">Masuk</button>
+      </form>
+      <p class="help" style="text-align:center;margin:0">Lupa password? Hubungi HR pusat untuk reset.</p>
+    </div>
+    <div class="card stack" style="margin-top:14px">
+      <h3 style="margin:0">Akun demo</h3>
+      <div style="font-size:13px">HR pusat: <span class="cred">HR0001</span> / <span class="cred">demo123</span></div>
+      ${ke ? `<div style="font-size:13px">Karyawan: <span class="cred">${esc(k.username)}</span> / <span class="cred">${esc(k.pw)}</span> <span class="help">(tanggal lahir DDMMYY, wajib diganti)</span></div>` : ''}
+      <div class="actions"><button class="btn secondary sm" data-act="quick" data-u="HR0001" data-p="demo123">Masuk sebagai HR</button>
+      ${ke ? `<button class="btn secondary sm" data-act="quick" data-u="${esc(k.username)}" data-p="${esc(k.pw)}">Masuk sebagai Karyawan</button>` : ''}</div>
+    </div></div></div>`;
+}
+function viewChangePw() {
+  return `<div class="auth"><div class="box"><div class="logo"><img src="${LOGO}" alt="Bukaka"></div>
+    <div class="card stack"><div><h2>Ganti Password</h2><p class="sub">Demi keamanan, Anda wajib mengganti password awal sebelum melanjutkan.</p></div>
+    <form data-form="changepw" class="stack">
+      ${field('current', 'Password saat ini', '', { type: 'password', req: true, help: S.user.role === 'Karyawan' ? 'Demo: password awal = tanggal lahir DDMMYY (' + S.user.pw + ')' : '' })}
+      ${field('pw', 'Password baru', '', { type: 'password', req: true, help: 'Minimal 8 karakter, mengandung huruf dan angka, tidak memuat tanggal lahir/NIK.' })}
+      ${field('pw2', 'Ulangi password baru', '', { type: 'password', req: true })}
+      <button class="btn primary block">Simpan Password</button></form>
+      <button class="btn ghost block" data-act="logout">Keluar</button></div></div></div>`;
+}
+
+/* ---------- tampilan: kerangka ---------- */
+const NAV_HR = [['dashboard', 'Dashboard'], ['karyawan', 'Data Karyawan'], ['proyek', 'Data Proyek'], ['import', 'Import / Export'], ['cv', 'CV Generator'], ['akun', 'Akun Pengguna'], ['audit', 'Audit Log']];
+function viewShell(inner) {
+  const u = S.user; const nav = (u.role === 'HR' ? NAV_HR : []).concat(u.employeeId ? [['saya', 'Profil Saya']] : []);
+  const cur = S.view === 'detail' ? 'karyawan' : (S.view === 'cvdetail' ? 'cv' : S.view);
+  return `<div class="shell">
+    <aside class="${S.menu ? 'open' : ''}"><div class="brand"><img src="${LOGO}" alt="Bukaka"></div>
+      <nav>${nav.map(([k, t]) => `<a href="#${k}" class="${cur === k ? 'active' : ''}" data-nav="${k}">${t}</a>`).join('')}</nav></aside>
+    ${S.menu ? '<div class="scrim" data-act="closemenu"></div>' : ''}
+    <div class="main"><header class="top">
+      <div class="actions"><button class="btn ghost menu-btn" data-act="menu" aria-label="Buka menu">☰</button><img class="m-logo" src="${LOGO}" alt="Bukaka"></div>
+      <div class="actions"><div class="who"><b>${esc(accName(u))}</b><span>${u.role} · ${esc(u.username)}</span></div><button class="btn secondary sm" data-act="logout">Keluar</button></div>
+    </header><div class="content">${S.flash ? `<div class="alert ${S.flash[1]}" style="margin-bottom:16px">${esc(S.flash[0])}</div>` : ''}${inner}</div></div></div>`;
+}
+const head = (title, sub, actions = '') => `<div class="page-head"><div><h1>${esc(title)}</h1>${sub ? `<p class="sub">${esc(sub)}</p>` : ''}</div><div class="actions">${actions}</div></div>`;
+
+/* ---------- dashboard ---------- */
+function viewDashboard() {
+  const act = S.employees.filter(e => e.status === 'Aktif');
+  const ct = act.filter(e => { const d = daysLeft(e.akhir_kontrak); return d !== null && d <= 90; }).sort((a, b) => a.akhir_kontrak.localeCompare(b.akhir_kontrak));
+  const cnt = f => ct.filter(e => f(daysLeft(e.akhir_kontrak))).length;
+  return head('Dashboard HR', 'Per ' + fmtDate(iso(TODAY))) + `
+  <div class="grid g4 tiles" style="margin-bottom:16px">
+    <a class="tile" href="#karyawan" data-nav="karyawan" data-filter="Aktif"><small>Karyawan aktif</small><b>${act.length}</b></a>
+    <a class="tile" href="#karyawan" data-nav="karyawan" data-filter="Nonaktif"><small>Karyawan nonaktif</small><b>${S.employees.length - act.length}</b></a>
+    <a class="tile" href="#proyek" data-nav="proyek"><small>Proyek aktif</small><b>${S.projects.filter(p => p.status === 'Aktif').length}</b></a>
+    <a class="tile" href="#dashboard"><small>Kontrak ≤ 90 hari / lewat</small><b>${ct.length}</b></a></div>
+  <div class="grid g3" style="margin-bottom:16px"><a class="btn secondary" href="#karyawan" data-nav="karyawan">Data Karyawan</a><a class="btn secondary" href="#import" data-nav="import">Import Excel</a><a class="btn secondary" href="#cv" data-nav="cv">CV Generator</a></div>
+  <div class="card"><div class="page-head" style="margin-bottom:12px"><h2>Pengingat akhir kontrak</h2><div class="actions">
+    ${badge('Lewat: ' + cnt(d => d < 0), 'b-bad')}${badge('≤ 30 hari: ' + cnt(d => d >= 0 && d <= 30), 'b-orange')}${badge('31–60 hari: ' + cnt(d => d > 30 && d <= 60), 'b-warn')}${badge('61–90 hari: ' + cnt(d => d > 60 && d <= 90), 'b-blue')}</div></div>
+    <div class="tw"><table class="t"><thead><tr><th>Nama</th><th>NIK</th><th>Proyek</th><th>Akhir kontrak</th><th class="r">Sisa hari</th><th>Status</th></tr></thead><tbody>
+    ${ct.map(e => `<tr><td><a href="#detail" data-open="${e.id}" data-tab="pekerjaan">${esc(e.nama)}</a></td><td class="mono">${e.nik}</td><td>${esc(activeProjects(e).join(', ') || '-')}</td><td class="nw">${fmtDate(e.akhir_kontrak)}</td><td class="r num">${daysLeft(e.akhir_kontrak)}</td><td>${remBadge(e)}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">Tidak ada kontrak yang berakhir dalam 90 hari.</td></tr>'}
+    </tbody></table></div><p class="help">Kontrak yang sudah lewat tetap ditampilkan selama karyawan masih aktif. Status karyawan tidak berubah otomatis.</p></div>`;
+}
+
+/* ---------- daftar karyawan ---------- */
+function filtered() {
+  const f = S.f; const q = f.q.toLowerCase();
+  return S.employees.filter(e => (!q || e.nik.includes(q) || e.nama.toLowerCase().includes(q)) && (!f.status || e.status === f.status)
+    && (!f.project || e.assignments.some(a => a.status === 'Aktif' && String(a.projectId) === f.project))
+    && (!f.kontrak || (() => { const d = daysLeft(e.akhir_kontrak); if (f.kontrak === 'lewat') return d !== null && d < 0; if (f.kontrak === 'kosong') return d === null; return d !== null && d >= 0 && d <= Number(f.kontrak); })()))
+    .sort((a, b) => a.nama.localeCompare(b.nama));
+}
+function empRows() {
+  const list = filtered(); const per = 15; const pages = Math.max(1, Math.ceil(list.length / per)); S.f.page = Math.min(S.f.page, pages);
+  const rows = list.slice((S.f.page - 1) * per, S.f.page * per);
+  return `<p class="sub" style="margin:0 0 10px">${list.length} profil ditemukan</p><div class="tw"><table class="t"><thead><tr><th>NIK</th><th>Nama</th><th>Jabatan</th><th>Proyek aktif</th><th>Status</th><th>Akhir kontrak</th><th class="r">Aksi</th></tr></thead><tbody>
+  ${rows.map(e => `<tr><td class="mono">${e.nik}</td><td><a href="#detail" data-open="${e.id}">${esc(e.nama)}</a></td><td>${esc(e.jobtitle)}</td><td>${esc(activeProjects(e).join(', ') || '-')}</td><td>${stBadge(e.status)}</td>
+  <td class="nw">${fmtDate(e.akhir_kontrak)}${e.status === 'Aktif' && reminder(e) ? '<div>' + remBadge(e) + '</div>' : ''}</td>
+  <td class="r nw"><button class="btn ghost sm" data-open="${e.id}">Detail</button><button class="btn ghost sm" data-cv="${e.id}">CV</button>${e.status === 'Aktif' ? `<button class="btn ghost sm red" data-act="deact" data-id="${e.id}">Nonaktifkan</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="empty">Tidak ada data yang cocok dengan filter.</td></tr>'}
+  </tbody></table></div>
+  <div class="actions" style="margin-top:12px;justify-content:space-between"><span class="sub">Halaman ${S.f.page} dari ${pages}</span><div class="actions">
+  <button class="btn secondary sm" data-act="page" data-d="-1" ${S.f.page <= 1 ? 'disabled' : ''}>« Sebelumnya</button><button class="btn secondary sm" data-act="page" data-d="1" ${S.f.page >= pages ? 'disabled' : ''}>Berikutnya »</button></div></div>`;
+}
+function viewEmployees() {
+  return head('Data Karyawan', '', `<a class="btn secondary" href="#import" data-nav="import">Import / Export Excel</a><button class="btn primary" data-act="newemp">+ Tambah Karyawan</button>`) + `
+  <div class="card grid g4" style="margin-bottom:14px">
+    ${field('q', 'Cari NIK / nama', S.f.q, { cls: 'span2', type: 'search', attrs: { 'data-filter-input': 'q', placeholder: 'Ketik NIK atau nama…' } })}
+    ${field('status', 'Status', S.f.status, { options: ['Aktif', 'Nonaktif'], placeholder: 'Semua', attrs: { 'data-filter-input': 'status' } })}
+    ${field('project', 'Proyek aktif', S.f.project, { options: S.projects.map(p => [p.id, p.name]), placeholder: 'Semua', attrs: { 'data-filter-input': 'project' } })}
+    ${field('kontrak', 'Akhir kontrak', S.f.kontrak, { options: [['30', '≤ 30 hari'], ['60', '≤ 60 hari'], ['90', '≤ 90 hari'], ['lewat', 'Sudah lewat'], ['kosong', 'Tidak diisi']], placeholder: 'Semua', attrs: { 'data-filter-input': 'kontrak' } })}
+    <div class="actions" style="align-items:flex-end"><button class="btn ghost" data-act="resetf">Reset filter</button></div>
+  </div><div id="emp-results">${empRows()}</div>`;
+}
+
+/* ---------- form profil ---------- */
+function identitasFields(e) {
+  return `<fieldset><legend>Data personal</legend><div class="grid g3">
+    ${field('nik', 'NIK', e.nik, { req: true, help: 'Disimpan sebagai teks; angka nol di depan dipertahankan.' })}${field('nama', 'Nama lengkap', e.nama, { req: true, cls: 'span2' })}
+    ${field('panggilan', 'Nama panggilan', e.panggilan)}${field('jk', 'Jenis kelamin', e.jk, { options: OPT.jk, req: true })}${field('kewarganegaraan', 'Kewarganegaraan', e.kewarganegaraan, { help: 'Wajib untuk CV (Citizen). Contoh: Indonesian.' })}
+    ${field('tempat_lahir', 'Tempat lahir', e.tempat_lahir)}${field('tgl_lahir', 'Tanggal lahir', e.tgl_lahir, { type: 'date', help: 'Wajib untuk CV; juga password awal (DDMMYY).' })}${field('agama', 'Agama', e.agama, { options: OPT.agama })}
+    ${field('nikah', 'Status nikah', e.nikah, { options: OPT.nikah })}${field('darah', 'Golongan darah', e.darah, { options: OPT.darah })}${field('tinggi', 'Tinggi badan (cm)', e.tinggi, { type: 'number' })}${field('berat', 'Berat badan (kg)', e.berat, { type: 'number' })}
+  </div></fieldset>
+  <fieldset style="margin-top:22px"><legend>Kontak</legend><div class="grid g3">${field('hp', 'No. HP', e.hp, { type: 'tel', help: 'Minimal salah satu dari No. HP atau email diperlukan untuk CV.' })}${field('email', 'Email', e.email, { type: 'email' })}${field('alamat', 'Alamat', e.alamat, { type: 'textarea', cls: 'spanall', help: 'Tidak dicetak pada CV.' })}</div></fieldset>
+  <fieldset style="margin-top:22px"><legend>Administrasi <span class="help" style="font-weight:400">(rahasia — hanya HR, tidak dicetak pada CV)</span></legend><div class="grid g3">
+    ${field('ktp', 'No. KTP', e.ktp)}${field('kk', 'No. KK', e.kk)}${field('npwp', 'NPWP', e.npwp)}${field('bpjs_tk', 'No. BPJS Ketenagakerjaan', e.bpjs_tk)}${field('bpjs_kes', 'No. BPJS Kesehatan', e.bpjs_kes)}${field('ptkp', 'Status PTKP', e.ptkp, { options: OPT.ptkp })}${field('ibu', 'Nama ibu kandung', e.ibu)}
+  </div></fieldset>`;
+}
+function pekerjaanFields(e) {
+  return `<fieldset><legend>Pekerjaan &amp; kontrak saat ini</legend><div class="grid g3">
+    ${field('jobtitle', 'Job title (Position di CV)', e.jobtitle, { req: true })}${field('kode_jbt', 'Kode jabatan', e.kode_jbt)}${field('kategori', 'Kategori karyawan', e.kategori, { help: "Kolom 'Status' pada Excel lama, mis. Karyawan Proyek." })}
+    ${field('status_awal', 'Status awal', e.status_awal)}${field('tgl_masuk', 'Tanggal masuk', e.tgl_masuk, { type: 'date', req: true })}${field('kontrak_ke', 'Kontrak ke-', e.kontrak_ke)}
+    ${field('akhir_kontrak', 'Akhir kontrak', e.akhir_kontrak, { type: 'date', help: 'Kontrak yang lewat tidak menonaktifkan karyawan secara otomatis.' })}</div></fieldset>`;
+}
+const F_ID = ['nik', 'nama', 'panggilan', 'jk', 'kewarganegaraan', 'tempat_lahir', 'tgl_lahir', 'agama', 'nikah', 'darah', 'tinggi', 'berat', 'hp', 'email', 'alamat', 'ktp', 'kk', 'npwp', 'bpjs_tk', 'bpjs_kes', 'ptkp', 'ibu'];
+const F_JOB = ['jobtitle', 'kode_jbt', 'kategori', 'status_awal', 'tgl_masuk', 'kontrak_ke', 'akhir_kontrak'];
+
+function viewNewEmployee() {
+  const blank = { status: 'Aktif', kategori: 'Karyawan Proyek', ...(S.draft || {}) };
+  return `<a class="back" href="#karyawan" data-nav="karyawan">← Data Karyawan</a>` + head('Tambah Karyawan', 'Pendidikan, foto, TRAINING, dan proyek dapat dilengkapi setelah profil tersimpan.') +
+    `<form data-form="newemp" class="card stack">${identitasFields(blank)}${pekerjaanFields(blank)}<div class="actions" style="justify-content:flex-end;border-top:1px solid var(--soft);padding-top:14px"><a class="btn secondary" href="#karyawan" data-nav="karyawan">Batal</a><button class="btn primary">Simpan Profil</button></div></form>`;
+}
+
+/* ---------- detail karyawan ---------- */
+const TABS = [['identitas', 'Identitas & Administrasi'], ['pekerjaan', 'Pekerjaan & Kontrak'], ['pendidikan', 'Pendidikan & Bahasa'], ['foto', 'Foto'], ['training', 'TRAINING'], ['pengalaman', 'Pengalaman Kerja']];
+function viewDetail() {
+  const e0 = emp(S.detailId); if (!e0) return '<p>Data tidak ditemukan.</p>';
+  const e = (S.draft && (S.formKey === 'saveid' || S.formKey === 'savejob')) ? { ...e0, ...S.draft } : e0;
+  let body = '';
+  if (S.tab === 'identitas') body = `<form data-form="saveid" class="card">${identitasFields(e)}<div class="actions" style="justify-content:flex-end;margin-top:16px"><button class="btn primary">Simpan</button></div><p class="meta">Diperbarui ${fmtDT(e.updated)}</p></form>`;
+  if (S.tab === 'pekerjaan') {
+    const dl = daysLeft(e.akhir_kontrak);
+    body = `<form data-form="savejob" class="card" style="margin-bottom:16px">${pekerjaanFields(e)}<div class="actions" style="margin-top:12px"><span class="sub" style="margin:0">Status pengingat kontrak:</span>${remBadge(e) || '<span class="sub" style="margin:0">-</span>'}${dl !== null ? `<span class="sub" style="margin:0">(${dl} hari)</span>` : ''}</div><div class="actions" style="justify-content:flex-end;margin-top:14px"><button class="btn primary">Simpan</button></div></form>
+    <div class="card stack"><div><h2>Penugasan proyek</h2><p class="sub">Satu karyawan dapat memiliki lebih dari satu proyek aktif. Proyek dipilih dari master proyek.</p></div>
+    ${e.assignments.map(a => `<div class="item"><div><b>${esc(prj(a.projectId)?.name)}</b> ${stBadge(a.status)}<div class="sub">${fmtDate(a.start)} s/d ${a.end ? fmtDate(a.end) : 'sekarang'}</div></div><div class="actions">${a.status === 'Aktif' ? `<button class="btn secondary sm" data-act="endasg" data-id="${a.id}">Tandai Selesai</button>` : `<button class="btn secondary sm" data-act="reactasg" data-id="${a.id}">Aktifkan</button>`}</div></div>`).join('') || '<p class="sub">Belum ada penugasan.</p>'}
+    <form data-form="addasg" class="addbox grid g4"><b class="spanall">Tambah penugasan</b>${field('projectId', 'Proyek', dv('addasg', 'projectId'), { options: S.projects.filter(p => p.status === 'Aktif').map(p => [p.id, p.code + ' — ' + p.name]), req: true, cls: 'spanall' })}${field('start', 'Mulai', dv('addasg', 'start'), { type: 'date' })}${field('end', 'Selesai', dv('addasg', 'end'), { type: 'date' })}${field('status', 'Status', dv('addasg', 'status', 'Aktif'), { options: ['Aktif', 'Selesai'], placeholder: false })}<div class="actions" style="align-items:flex-end"><button class="btn primary block">Tambah</button></div></form></div>`;
+  }
+  if (S.tab === 'pendidikan') body = `<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))"><div class="card stack"><h2>Riwayat pendidikan</h2>
+    ${e.education.slice().sort((a, b) => (b.year || 0) - (a.year || 0)).map(d => `<div class="item"><div><b>${d.year || 'Tahun ?'}</b> — ${esc(d.level)}${d.major ? ' - ' + esc(d.major) : ''} - ${esc(d.institution)} ${d.year ? '' : badge('tahun lulus belum diisi', 'b-warn')}</div><button class="btn ghost sm red" data-act="deledu" data-id="${d.id}">Hapus</button></div>`).join('') || '<p class="sub">Belum ada riwayat pendidikan.</p>'}
+    <form data-form="addedu" class="addbox grid g2"><b class="spanall">Tambah pendidikan</b>${field('level', 'Jenjang', dv('addedu', 'level'), { options: OPT.level, req: true })}${field('year', 'Tahun lulus', dv('addedu', 'year'), { type: 'number' })}${field('major', 'Jurusan', dv('addedu', 'major'))}${field('institution', 'Institusi / sekolah', dv('addedu', 'institution'), { req: true })}<div class="spanall"><button class="btn primary">Tambah</button></div></form></div>
+    <div class="card stack"><div><h2>Bahasa</h2><p class="sub">Ditampilkan pada baris Language di CV.</p></div>
+    ${e.languages.map((l, i) => `<div class="item"><div>${esc(l)}</div><button class="btn ghost sm red" data-act="dellang" data-i="${i}">Hapus</button></div>`).join('') || '<p class="sub">Belum ada bahasa.</p>'}
+    <form data-form="addlang" class="stack">${field('choice', 'Tambah bahasa', dv('addlang', 'choice'), { options: [...OPT.lang, 'Lainnya'] })}${field('other', 'Nama bahasa (bila Lainnya)', dv('addlang', 'other'))}<button class="btn primary block">Tambah Bahasa</button></form></div></div>`;
+  if (S.tab === 'foto') body = `<div class="card" style="display:flex;gap:22px;flex-wrap:wrap">${e.foto ? `<img class="photo-img" src="${e.foto}" alt="Foto ${esc(e.nama)}">` : '<div class="photo-ph">Belum ada foto</div>'}
+    <div style="flex:1 1 260px;min-width:0" class="stack"><div><h2>Foto profil CV</h2><p class="sub">JPG/PNG, maksimal 2 MB. Disarankan rasio 3:4. Di aplikasi asli foto disimpan privat dan metadata dihapus; di demo ini foto hanya ada di browser Anda.</p></div>
+    <input type="file" id="f-foto" accept="image/jpeg,image/png" data-photo="${e.id}">${errOf('foto') ? `<div class="ferr">${esc(errOf('foto'))}</div>` : ''}
+    ${e.foto ? `<div><button class="btn ghost red" data-act="delfoto">Hapus Foto</button></div>` : ''}</div></div>`;
+  if (S.tab === 'training') body = `<div class="card stack"><div><h2>TRAINING</h2><p class="sub">Pelatihan, sertifikasi, dan kompetensi tampil bersama di bagian TRAINING pada CV. Jenis, nomor sertifikat, dan masa berlaku adalah metadata internal.</p></div>
+    ${e.trainings.slice().sort((a, b) => (b.year || 0) - (a.year || 0)).map(t => `<div class="item"><div><b>${esc(t.name)}</b> ${badge(t.type)}<div class="sub">${t.year || 'Tahun ?'} · ${esc(t.org || 'Penyelenggara belum diisi')}${t.expiry ? ' · berlaku s/d ' + fmtDate(t.expiry) : ''}</div></div><button class="btn ghost sm red" data-act="deltrn" data-id="${t.id}">Hapus</button></div>`).join('') || '<p class="sub">Belum ada data TRAINING.</p>'}
+    <form data-form="addtrn" class="addbox grid g3"><b class="spanall">Tambah TRAINING</b>${field('type', 'Jenis', dv('addtrn', 'type'), { options: OPT.trnType, req: true })}${field('name', 'Nama training / sertifikasi / kompetensi', dv('addtrn', 'name'), { req: true, cls: 'span2' })}${field('year', 'Tahun', dv('addtrn', 'year'), { type: 'number' })}${field('org', 'Penyelenggara', dv('addtrn', 'org'), { cls: 'span2' })}${field('cert', 'Nomor sertifikat', dv('addtrn', 'cert'))}${field('issue', 'Tanggal terbit', dv('addtrn', 'issue'), { type: 'date' })}${field('expiry', 'Berlaku sampai', dv('addtrn', 'expiry'), { type: 'date' })}<div class="spanall"><button class="btn primary">Tambah</button></div></form></div>`;
+  if (S.tab === 'pengalaman') body = `<div style="max-width:760px">${experienceBlock(e)}</div>`;
+  return `<a class="back" href="#karyawan" data-nav="karyawan">← Data Karyawan</a>` +
+    head(e0.nama, `NIK ${e0.nik} · ${e0.jobtitle}`, `${stBadge(e.status)}<button class="btn secondary" data-cv="${e.id}">Buat CV</button><button class="btn ${e.status === 'Aktif' ? 'danger' : 'primary'}" data-act="${e.status === 'Aktif' ? 'deact' : 'react'}" data-id="${e.id}">${e.status === 'Aktif' ? 'Nonaktifkan' : 'Aktifkan'}</button>`) +
+    `<div class="tabs" role="tablist">${TABS.map(([k, t]) => `<button role="tab" class="${S.tab === k ? 'on' : ''}" data-tabbtn="${k}">${t}</button>`).join('')}</div>${body}`;
+}
+
+/* ---------- pengalaman kerja (HR & portal) ---------- */
+function expSorted(e) { return e.experiences.slice().sort((a, b) => (b.current - a.current) || (b.sy - a.sy) || (b.sm - a.sm)); }
+function expForm(e, x) {
+  const k = x ? 'x' + x.id : 'xnew'; const d = (S.formKey === k && S.draft) ? S.draft : (x || { type: '', current: false });
+  const monthOpts = MONTHS.slice(1).map((m, i) => [i + 1, m]);
+  const st = S.expState && S.expState.key === k ? S.expState : null;
+  return `<form data-form="saveexp" data-key="${k}" data-emp="${e.id}" ${x ? `data-id="${x.id}"` : ''} class="grid g2" novalidate>
+    ${field('type', 'Jenis pengalaman', d.type, { options: OPT.expType, req: true, cls: 'spanall', key: k })}
+    ${field('position', 'Jabatan / posisi', d.position, { req: true, key: k })}${field('company', 'Nama perusahaan', d.company, { req: true, key: k })}
+    ${field('project', 'Nama proyek (opsional)', d.project, { cls: 'spanall', key: k })}
+    <div class="spanall"><label class="l">Mulai <span class="req">*</span></label><div class="grid g2">${field('sm', '', d.sm, { options: monthOpts, placeholder: 'Bulan', key: k })}${field('sy', '', d.sy, { type: 'number', key: k, attrs: { placeholder: 'Tahun', inputmode: 'numeric' } })}</div>${errOf('start') ? `<div class="ferr">${esc(errOf('start'))}</div>` : ''}</div>
+    <label class="check spanall"><input type="checkbox" name="current" value="1" ${d.current ? 'checked' : ''} data-current> Masih bekerja di sini</label>
+    <div class="spanall" ${d.current ? 'hidden' : ''} data-endbox><label class="l">Selesai <span class="req">*</span></label><div class="grid g2">${field('em', '', d.em, { options: monthOpts, placeholder: 'Bulan', key: k })}${field('ey', '', d.ey, { type: 'number', key: k, attrs: { placeholder: 'Tahun', inputmode: 'numeric' } })}</div>${errOf('end') ? `<div class="ferr">${esc(errOf('end'))}</div>` : ''}</div>
+    ${field('resp', 'Uraian tanggung jawab', d.resp, { type: 'textarea', cls: 'spanall', key: k, attrs: { maxlength: 2000, placeholder: 'Contoh: Mengawasi pemasangan struktur baja, memastikan K3 di lapangan…' } })}
+    ${(errOf('start') || errOf('end') || '').includes('konfirmasi') ? `<label class="check spanall"><input type="checkbox" name="confirm_future" value="1"> Saya konfirmasi tahun di masa depan memang benar.</label>` : ''}
+    <div class="spanall actions" style="justify-content:space-between;border-top:1px solid var(--soft);padding-top:12px">
+      <div class="status" role="status" aria-live="polite">${st ? `<span class="${st.cls}">${esc(st.msg)}</span>` : ''}</div>
+      <button class="btn primary" ${st && st.busy ? 'disabled' : ''}>${x ? 'Simpan Perubahan' : 'Simpan Pengalaman'}</button></div></form>`;
+}
+function experienceBlock(e) {
+  const list = expSorted(e);
+  return `<div class="stack">
+    <label class="check" style="font-size:12.5px;color:var(--muted)"><input type="checkbox" data-act="weak" ${S.weak ? 'checked' : ''}> Simulasikan sinyal lemah di lapangan (2 percobaan pertama gagal, lalu sistem mencoba ulang otomatis)</label>
+    ${S.addExp ? `<div class="card"><h3>Tambah pengalaman kerja</h3><p class="sub" style="margin:0 0 12px">Isi pengalaman sebelum bergabung maupun selama bekerja. Data langsung tersimpan setelah menekan Simpan.</p>${expForm(e, null)}<button class="btn ghost" style="margin-top:8px" data-act="canceladd">Tutup</button></div>` : `<div><button class="btn primary" data-act="addexp">+ Tambah Pengalaman</button></div>`}
+    ${list.map(x => `<div class="card"><div class="item" style="border:0;padding:0"><div><div class="sub" style="margin:0">${my(x.sm, x.sy)} s/d ${x.current ? 'Sekarang' : my(x.em, x.ey)} · ${esc(x.type)}</div><b>${esc(x.position)}</b><div class="sub" style="margin:0">${esc(x.company)}${x.project ? ' — ' + esc(x.project) : ''}</div>${x.resp ? `<p style="white-space:pre-line;margin:8px 0 0">${esc(x.resp)}</p>` : ''}<div class="meta">Diperbarui ${fmtDT(x.at)} oleh ${esc(x.by)}</div></div>
+      <div class="actions"><button class="btn secondary sm" data-act="editexp" data-id="${x.id}">${S.editExp === x.id ? 'Tutup' : 'Edit'}</button><button class="btn ghost sm red" data-act="archexp" data-id="${x.id}" data-emp="${e.id}">Arsipkan</button></div></div>
+      ${S.editExp === x.id ? `<div style="border-top:1px solid var(--soft);margin-top:12px;padding-top:12px">${expForm(e, x)}</div>` : ''}</div>`).join('') || '<div class="card empty">Belum ada pengalaman kerja.</div>'}</div>`;
+}
+function viewPortal() {
+  const e = emp(S.user.employeeId); const last = e.experiences.reduce((m, x) => x.at > m ? x.at : m, new Date(0));
+  return `<div style="max-width:760px;margin:0 auto">` + head('Profil Saya') + `<div class="card" style="margin-bottom:18px"><dl class="dl"><div><dt>Nama</dt><dd>${esc(e.nama)}</dd></div><div><dt>NIK</dt><dd class="mono">${e.nik}</dd></div><div><dt>Jabatan</dt><dd>${esc(e.jobtitle)}</dd></div><div><dt>Proyek aktif</dt><dd>${esc(activeProjects(e).join(', ') || '-')}</dd></div></dl>
+  <p class="help" style="margin-top:14px">Data identitas, pendidikan, TRAINING, dan foto dikelola oleh HR pusat. Hubungi HR bila ada yang perlu diperbaiki.</p></div>
+  <h2>Pengalaman Kerja</h2><p class="sub" style="margin:0 0 12px">Terakhir diperbarui: ${e.experiences.length ? fmtDT(last) : '-'}</p>${experienceBlock(e)}</div>`;
+}
+
+/* ---------- proyek ---------- */
+function viewProjects() {
+  const count = p => S.employees.reduce((n, e) => n + e.assignments.filter(a => a.projectId === p.id && a.status === 'Aktif').length, 0);
+  return head('Data Proyek', 'Master proyek untuk penugasan karyawan.') + `<div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr);align-items:start" id="prjgrid">
+  <div class="tw"><table class="t"><thead><tr><th>Kode</th><th>Nama proyek</th><th>Status</th><th>Penugasan aktif</th><th class="r">Aksi</th></tr></thead><tbody>
+  ${S.projects.slice().sort((a, b) => a.status.localeCompare(b.status) || a.name.localeCompare(b.name)).map(p => `<tr><td class="mono">${esc(p.code || '-')}</td><td>${esc(p.name)}</td><td>${stBadge(p.status)}</td><td class="num">${count(p)}</td><td class="r"><button class="btn ghost sm" data-act="prjtoggle" data-id="${p.id}">${p.status === 'Aktif' ? 'Nonaktifkan' : 'Aktifkan'}</button></td></tr>`).join('')}</tbody></table></div>
+  <form data-form="addprj" class="card stack"><h2>Tambah proyek</h2>${field('code', 'Kode proyek', dv('addprj', 'code'), { help: 'Opsional, unik bila diisi.' })}${field('name', 'Nama proyek', dv('addprj', 'name'), { req: true })}<button class="btn primary block">Simpan Proyek</button></form></div>`;
+}
+
+/* ---------- import Excel (diproses di browser) ---------- */
+const COLS = { nik: 'nik', nama: 'nama', namapanggilan: 'panggilan', jeniskelamin: 'jk', kodejbt: 'kode_jbt', tglmasuk: 'tgl_masuk', status: 'kategori', statusawal: 'status_awal', kontrakke: 'kontrak_ke', akhirkontrak: 'akhir_kontrak', tgllahir: 'tgl_lahir', tempatlahir: 'tempat_lahir', pendidikan: 'edu.level', jurusan: 'edu.major', sekolah: 'edu.institution', alamat: 'alamat', goldarah: 'darah', tinggibadan: 'tinggi', beratbadan: 'berat', agama: 'agama', noktp: 'ktp', nobpjstk: 'bpjs_tk', statusnikah: 'nikah', jobtitle: 'jobtitle', npwp: 'npwp', nobpjskes: 'bpjs_kes', kk: 'kk', namaibu: 'ibu', statusptkp: 'ptkp', nohp: 'hp', email: 'email', project: 'project', kewarganegaraan: 'kewarganegaraan', statuskaryawan: 'status', tahunlulus: 'edu.year', bahasa: 'languages' };
+const LABEL = { nik: 'NIK', nama: 'Nama', jk: 'JenisKelamin', jobtitle: 'Jobtitle', tgl_masuk: 'TglMasuk', akhir_kontrak: 'AkhirKontrak', tgl_lahir: 'TglLahir', agama: 'Agama', nikah: 'StatusNikah', darah: 'GolDarah', ptkp: 'Status PTKP', ktp: 'NoKTP', kk: 'KK', npwp: 'NPWP', bpjs_tk: 'No BPJS TK', bpjs_kes: 'No BPJS Kes', kode_jbt: 'KodeJbt', kontrak_ke: 'KontrakKe', kategori: 'Status', status: 'StatusKaryawan', kewarganegaraan: 'Kewarganegaraan', hp: 'NoHP', email: 'email' };
+const lab = f => LABEL[f] || f;
+const normH = h => String(h ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const empty = v => v === null || v === undefined || (typeof v === 'string' && v.trim() === '');
+const txt = v => empty(v) ? null : (typeof v === 'number' ? (Number.isInteger(v) ? String(v) : String(v)) : String(v).trim());
+const serialToISO = n => { const d = new Date(Math.round((n - 25569) * 864e5)); return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`; };
+function cellDate(v) {
+  if (empty(v)) return [null, null];
+  if (typeof v === 'number') return [serialToISO(v), null];
+  const s = String(v).trim(); let m;
+  if ((m = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/))) return [`${m[3]}-${pad(m[2])}-${pad(m[1])}`, null];
+  if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return [`${m[1]}-${m[2]}-${m[3]}`, null];
+  return [null, `format tanggal "${s}" tidak dikenali (gunakan DD/MM/YYYY)`];
+}
+function mapEnum(kind, v, options) {
+  const o = options.find(x => x.toLowerCase() === v.toLowerCase()); if (o) return o;
+  if (kind === 'ptkp') { const k = v.toUpperCase().replace(/[\/\s-]/g, ''); return OPT.ptkp.includes(k) ? k : null; }
+  return (ALIAS[kind] || {})[v.toLowerCase().replace(/\s+/g, ' ')] || null;
+}
+function analyzeRows(rows, sheetName) {
+  const header = rows[0] || []; const idx = {};
+  header.forEach((h, i) => { const f = COLS[normH(h)]; if (f && !(f in idx)) idx[f] = i; });
+  const missing = ['nik', 'nama', 'jk', 'jobtitle', 'tgl_masuk'].filter(f => !(f in idx));
+  if (missing.length) return { fatal: `Kolom wajib tidak ditemukan pada sheet "${sheetName}": ${missing.map(lab).join(', ')}.` };
+  const data = rows.slice(1).map((r, i) => ({ row: i + 2, cells: Object.fromEntries(Object.entries(idx).map(([f, c]) => [f, r[c] ?? null])) })).filter(r => Object.values(r.cells).some(v => !empty(v)));
+  const counts = {}; data.forEach(r => { const n = txt(r.cells.nik); if (n) counts[n] = (counts[n] || 0) + 1; });
+  const mapping = {}; let numericNik = 0; const out = [];
+  for (const r of data) {
+    const c = r.cells; const errs = []; const warns = []; const v = {};
+    if (typeof c.nik === 'number') numericNik++;
+    for (const [f, raw] of Object.entries(c)) {
+      if (f.startsWith('edu.') || f === 'project' || f === 'languages') continue;
+      if (['tgl_masuk', 'akhir_kontrak', 'tgl_lahir'].includes(f)) { const [d, er] = cellDate(raw); if (er) errs.push(`${lab(f)}: ${er}.`); v[f] = d; continue; }
+      let t = txt(raw);
+      if (t !== null && ['ktp', 'kk', 'npwp', 'bpjs_tk', 'bpjs_kes'].includes(f) && typeof raw === 'number' && t.length >= 15) warns.push(`${lab(f)} tersimpan sebagai angka di Excel; angka ≥15 digit berisiko kehilangan digit terakhir. Periksa ulang dan format kolom sebagai Text.`);
+      if (t !== null && ['ktp', 'kk'].includes(f) && /^\d+$/.test(t) && t.length !== 16) { warns.push(`${lab(f)} berupa angka tetapi ${t.length} digit (seharusnya 16) — tidak diimpor, periksa sumber data.`); t = null; }
+      const enumOpts = { jk: OPT.jk, agama: OPT.agama, nikah: OPT.nikah, darah: OPT.darah, ptkp: OPT.ptkp, status: ['Aktif', 'Nonaktif'] }[f];
+      if (t !== null && enumOpts) { const m = mapEnum(f, t, enumOpts); if (!m) { (mapping[f] = mapping[f] || {})[t] = (mapping[f][t] || 0) + 1; if (f === 'jk') errs.push(`Jenis kelamin "${t}" tidak dikenali.`); else warns.push(`${lab(f)} "${t}" tidak dikenali — tidak diimpor, perlu pemetaan.`); t = null; } else t = m; }
+      v[f] = t;
+    }
+    if (v.hp) v.hp = (v.hp.startsWith('+') ? '+' : '') + v.hp.replace(/\D/g, '');
+    const cur = S.employees.find(e => e.nik === v.nik);
+    const fileVals = Object.fromEntries(Object.entries(v).filter(([, x]) => x !== null));
+    const merged = { ...(cur ? cur : { status: 'Aktif' }), ...fileVals };
+    if (!v.nik) errs.push('NIK wajib diisi.'); if (!merged.nama) errs.push('Nama wajib diisi.'); if (!merged.jk && !errs.some(x => x.startsWith('Jenis'))) errs.push('Jenis kelamin wajib diisi.');
+    if (!merged.jobtitle) errs.push('Jobtitle wajib diisi.'); if (!merged.tgl_masuk) errs.push('TglMasuk wajib diisi.');
+    if (merged.akhir_kontrak && merged.tgl_masuk && merged.akhir_kontrak < merged.tgl_masuk) errs.push('Akhir kontrak tidak boleh sebelum tanggal masuk.');
+    if (merged.tgl_lahir && parseISO(merged.tgl_lahir) > TODAY) errs.push('Tanggal lahir tidak boleh di masa depan.');
+    if (merged.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(merged.email)) errs.push('Email tidak valid.');
+    if (merged.akhir_kontrak && daysLeft(merged.akhir_kontrak) < 0 && merged.status === 'Aktif') warns.push('Akhir kontrak sudah lewat (status karyawan tidak diubah otomatis).');
+    if (!cur && !fileVals.status) warns.push('StatusKaryawan tidak diisi — profil baru diset Aktif.');
+    let edu = null; const lv = txt(c['edu.level']); const inst = txt(c['edu.institution']);
+    if (lv || inst) { const ml = lv ? mapEnum('level', lv, OPT.level) : null; if (lv && !ml) { (mapping.pendidikan = mapping.pendidikan || {})[lv] = (mapping.pendidikan[lv] || 0) + 1; warns.push(`Jenjang pendidikan "${lv}" tidak dikenali — tidak diimpor, perlu pemetaan.`); } else if (ml && inst) edu = { level: ml, major: txt(c['edu.major']), institution: inst, year: txt(c['edu.year']) ? Number(txt(c['edu.year'])) : null }; }
+    const langs = txt(c.languages) ? txt(c.languages).split(/[,;\/]+/).map(s => s.trim()).filter(Boolean) : [];
+    const changes = []; const important = [];
+    if (cur) for (const [f, x] of Object.entries(fileVals)) if (String(cur[f] ?? '') !== String(x)) { changes.push(f); if (['nama', 'jobtitle', 'kode_jbt', 'tgl_masuk', 'kontrak_ke', 'akhir_kontrak', 'status', 'kategori', 'kewarganegaraan'].includes(f)) important.push([f, cur[f], x]); }
+    const dup = v.nik && counts[v.nik] > 1; if (dup) errs.push('NIK muncul lebih dari satu kali di file. Perbaiki file lalu unggah ulang.');
+    out.push({ row: r.row, nik: v.nik, nama: merged.nama, status: dup ? 'duplicate' : (errs.length ? 'invalid' : (cur ? 'update' : 'new')), vals: fileVals, edu, langs, project: txt(c.project), errs, warns: [...new Set(warns)], changes, important });
+  }
+  const notes = numericNik ? [`${numericNik} NIK tersimpan sebagai angka di Excel. Bila NIK asli diawali angka 0, angka tersebut sudah hilang di file — format kolom NIK sebagai Text sebelum ekspor dari sistem lama.`] : [];
+  const newProjects = [...new Set(out.filter(r => ['new', 'update'].includes(r.status) && r.project && !S.projects.some(p => p.name.toLowerCase() === r.project.toLowerCase() || (p.code || '').toLowerCase() === r.project.toLowerCase())).map(r => r.project))];
+  return { sheet: sheetName, rows: out, mapping, notes, newProjects };
+}
+const xlSerial = (y, m, d) => (Date.UTC(y, m - 1, d) - Date.UTC(1899, 11, 30)) / 864e5;
+function sampleRows() {
+  // Meniru file "template_master_data_karyawan.xlsx": NIK, tanggal, dan nomor administrasi bertipe angka.
+  const H = ['NIK', 'Nama', 'NamaPanggilan', 'JenisKelamin', 'KodeJbt', 'TglMasuk', 'Status', 'StatusAwal', 'KontrakKe', 'AkhirKontrak', 'TglLahir', 'TempatLahir', 'Pendidikan', 'Jurusan', 'Sekolah', 'Alamat', 'GolDarah', 'TinggiBadan', 'BeratBadan', 'Agama', 'NoKTP', 'No BPJS TK', 'StatusNikah', 'Jobtitle', 'NPWP', 'No BPJS Kes', 'KK', 'NamaIbu', 'Status PTKP', 'NoHP', 'email', 'Project'];
+  const row = (nik, nama, jk, kode, masuk, kontrak, akhir, lahir, tempat, pend, jur, sek, agama, nikah, job, ibu, ptkp, email, proj) =>
+    [nik, nama, null, jk, kode, xlSerial(...masuk), 'Karyawan Proyek', null, kontrak, xlSerial(...akhir), xlSerial(...lahir), tempat, pend, jur, sek, 'Jl. Contoh RT 01/RW 02', null, null, null, agama, 1111111111111110, 22222222222, nikah, job, 22222222222, 22222222222, 22222222222, ibu, ptkp, '999999999999', email, proj];
+  return [H,
+    row(99999, 'Glsdlfdmfkl Ykmcsldsp', 'Laki-laki', 'Section Head', [2021, 1, 26], 1, [2027, 1, 25], [1997, 8, 20], 'Wonogiri', 'D3', 'Teknik Otomasi', 'Politeknik Manufaktur', 'Kristen', 'Menikah', 'Supervisi Site', 'Yhdjshjds Guhsdks', 'K1', 'aaaaaaaaaa@gmail.com', 'Project OKI'),
+    row(88888, 'Glsdlfdmfkl Ykmcsldsp', 'Laki-laki', 'Staf', [2024, 7, 31], 4, [2027, 1, 30], [1993, 10, 7], 'Kediri', 'S1', 'Teknik mesin', 'Universitas Brawijaya', 'Islam', 'Belum Menikah', 'HSE Officer', 'Ikdskd Hlksalmdal', 'TK0', 'bbbbbbbbb@gmail.com', 'SUTET 500KV Grati - Pasuruan'),
+    row(77777, 'Glsdlfdmfkl Ykmcsldsp', 'Perempuan', 'Department Head', [2025, 8, 4], 1, [2027, 8, 3], [1988, 2, 15], 'Bogor', 'SMK', 'Teknik Alat Berat', 'SMKN 1 Singosari', 'Katholik', 'Belum Menikah', 'QC Inspector', 'Ulmss Sklmdamld', 'TK0', 'cccccccccc@gmail.com', 'Project Hanggar'),
+    // Baris tambahan untuk memperlihatkan validasi:
+    row('001001', 'Puji Nurdiyanti', 'Perempuan', 'Supervisor', [2019, 5, 2], 3, [2027, 6, 30], [1982, 1, 3], 'Bandung', 'D3', 'Teknik Mesin', 'Politeknik Negeri Bandung', 'Islam', 'Menikah', 'Senior Mechanical Engineer', 'Ibu Contoh', 'K2', 'puji.nurdiyanti@contoh.co.id', 'Project Baru Cikarang'),
+    row(55555, 'Contoh Duplikat A', 'Laki-laki', 'Staf', [2022, 1, 1], 1, [2027, 1, 1], [1990, 1, 1], 'Depok', 'S1', 'Teknik Sipil', 'UI', 'Kepercayaan', 'Menikah', 'Surveyor', 'Ibu A', 'K0', 'a@contoh.co.id', 'Project OKI'),
+    row(55555, 'Contoh Duplikat B', 'L', 'Staf', [2022, 1, 1], 1, [2021, 1, 1], [1990, 1, 1], 'Depok', 'S1', 'Teknik Sipil', 'UI', 'Islam', 'Menikah', 'Surveyor', 'Ibu B', 'K0', 'b@contoh.co.id', 'Project OKI'),
+    row(44444, 'Contoh Invalid', 'X', 'Staf', [2022, 1, 1], 1, [2020, 1, 1], [1990, 1, 1], 'Depok', 'Diploma Graduate', 'Teknik Sipil', 'UI', 'Islam', 'Menikah', 'Surveyor', 'Ibu C', 'K0', 'c@contoh', 'Project OKI'),
+  ];
+}
+function applyImport(createProjects, createAccounts) {
+  const a = S.preview.analysis; let created = 0, updated = 0, accs = 0; const skipped = [];
+  for (const r of a.rows.filter(r => r.status === 'new' || r.status === 'update')) {
+    let e = S.employees.find(x => x.nik === r.nik);
+    if (e) { Object.assign(e, r.vals); e.updated = new Date(); updated++; log('employee', e.id, 'Update', [...r.changes, 'import']); }
+    else {
+      e = { id: nextId(), panggilan: '', kode_jbt: '', kategori: '', status_awal: '', kontrak_ke: '', akhir_kontrak: '', tgl_lahir: '', tempat_lahir: '', kewarganegaraan: '', alamat: '', darah: '', tinggi: '', berat: '', agama: '', ktp: '', bpjs_tk: '', nikah: '', npwp: '', bpjs_kes: '', kk: '', ibu: '', ptkp: '', hp: '', email: '', status: 'Aktif', foto: null, education: [], languages: [], trainings: [], experiences: [], assignments: [], created: new Date(), updated: new Date(), ...r.vals };
+      S.employees.push(e); created++; log('employee', e.id, 'Create', ['import']);
+      if (createAccounts && e.tgl_lahir && !S.accounts.some(x => x.username === e.nik)) { S.accounts.push({ id: nextId(), username: e.nik, role: 'Karyawan', employeeId: e.id, pw: ddmmyy(e.tgl_lahir), must: true, status: 'Aktif', last: null }); accs++; }
+    }
+    if (r.edu && !e.education.some(d => d.level === r.edu.level && d.institution.toLowerCase() === r.edu.institution.toLowerCase())) e.education.push({ id: nextId(), ...r.edu });
+    r.langs.forEach(l => { if (!e.languages.some(x => x.toLowerCase() === l.toLowerCase())) e.languages.push(l); });
+    if (r.project) {
+      let p = S.projects.find(p => p.name.toLowerCase() === r.project.toLowerCase() || (p.code || '').toLowerCase() === r.project.toLowerCase());
+      if (!p && createProjects) { p = { id: nextId(), code: '', name: r.project, status: 'Aktif' }; S.projects.push(p); log('project', p.id, 'Create', ['import']); }
+      if (!p) skipped.push(`Baris ${r.row} · NIK ${r.nik}: proyek "${r.project}" belum ada dan pembuatan proyek baru tidak dikonfirmasi.`);
+      else if (!e.assignments.some(x => x.projectId === p.id)) e.assignments.push({ id: nextId(), projectId: p.id, start: '', end: '', status: 'Aktif' });
+    }
+  }
+  const failed = a.rows.filter(r => r.status === 'invalid' || r.status === 'duplicate');
+  const res = { file: S.preview.file, at: new Date(), by: actor(), total: a.rows.length, created, updated, failed: failed.length, accs, skipped, failedRows: failed, warnRows: a.rows.filter(r => r.warns.length && ['new', 'update'].includes(r.status)) };
+  S.imports.unshift(res); S.lastResult = res; S.preview = null; log('import_batch', S.imports.length, 'Import', [`baru ${created}`, `diperbarui ${updated}`, `gagal ${failed.length}`]);
+}
+function viewImport() {
+  if (S.preview) return viewPreview();
+  if (S.lastResult) return viewImportResult();
+  return head('Import / Export Excel') + `<div class="grid g2" style="margin-bottom:18px">
+  <div class="card stack"><h2>1. Unggah file Excel</h2><p class="sub" style="margin:0">Sistem memvalidasi dan menampilkan <b>preview</b> lebih dulu. Tidak ada data yang disimpan sebelum Anda mengonfirmasi.</p>
+    <input type="file" id="f-xlsx" accept=".xlsx,.xls" data-xlsx>
+    ${S.importErr ? `<div class="alert a-bad">${esc(S.importErr)}</div>` : ''}
+    <div class="alert a-info">Di demo ini file Anda dibaca <b>langsung di browser</b> dan tidak dikirim ke server mana pun. Anda dapat mencoba file master asli.</div>
+    <div><button class="btn secondary" data-act="sample">Coba dengan contoh file master lama</button></div></div>
+  <div class="card stack"><h2>Template &amp; export</h2><p class="sub" style="margin:0">Template standar memuat kolom lama ditambah <i>Kewarganegaraan, StatusKaryawan, TahunLulus, Bahasa</i>, serta sheet <i>PenugasanProyek</i> dan <i>Petunjuk</i>.</p>
+    <div class="actions"><button class="btn secondary" data-act="nodl">Unduh Template Kosong</button><button class="btn secondary" data-act="nodl">Export Semua Karyawan</button></div>
+    <p class="help">Di aplikasi asli kedua tombol ini mengunduh file .xlsx. Halaman demo tidak dapat mengunduh file.</p></div></div>
+  <h2 style="margin-bottom:10px">Riwayat import</h2><div class="tw"><table class="t"><thead><tr><th>Waktu</th><th>File</th><th>Pengunggah</th><th>Baris</th><th>Baru</th><th>Diperbarui</th><th>Gagal</th><th>Status</th></tr></thead><tbody>
+  ${S.imports.map(b => `<tr><td class="nw">${fmtDT(b.at)}</td><td>${esc(b.file)}</td><td>${esc(b.by)}</td><td class="num">${b.total}</td><td class="num">${b.created}</td><td class="num">${b.updated}</td><td class="num">${b.failed}</td><td>${badge('Selesai', 'b-ok')}</td></tr>`).join('') || '<tr><td colspan="8" class="empty">Belum ada import.</td></tr>'}</tbody></table></div>`;
+}
+function viewPreview() {
+  const { analysis: a, file } = S.preview; const R = a.rows; const c = s => R.filter(r => r.status === s).length;
+  const unchanged = R.filter(r => r.status === 'update' && !r.changes.length).length;
+  const tile = (t, v, col) => `<div class="tile"><small>${t}</small><b style="color:${col}">${v}</b></div>`;
+  const prob = R.filter(r => r.status === 'invalid' || r.status === 'duplicate');
+  return `<a class="back" href="#import" data-act="cancelimp">← Import / Export</a>` + head('2. Preview import', `${file} · sheet ${a.sheet}`) + `
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin-bottom:16px">${tile('Total baris', R.length, 'var(--fg)')}${tile('Profil baru', c('new'), 'var(--ok)')}${tile('Akan diperbarui', c('update'), 'var(--brand-700)')}${tile('Tanpa perubahan', unchanged, 'var(--muted)')}${tile('NIK duplikat', c('duplicate'), 'var(--bad)')}${tile('Baris invalid', c('invalid'), 'var(--bad)')}</div>
+  <div class="stack">${a.notes.map(n => `<div class="alert a-warn">${esc(n)}</div>`).join('')}
+  ${Object.keys(a.mapping).length ? `<div class="card"><h3 style="color:var(--warn)">Nilai yang tidak dikenali (perlu pemetaan)</h3><p class="sub">Nilai berikut tidak diimpor (tidak dibuang diam-diam). Perbaiki di file, atau minta admin menambah pemetaan di <code>config/karyawan.php</code>.</p><ul>${Object.entries(a.mapping).flatMap(([f, vs]) => Object.entries(vs).map(([v, n]) => `<li><b>${esc(lab(f))}</b>: "${esc(v)}" — ${n} baris</li>`)).join('')}</ul></div>` : ''}
+  ${prob.length ? `<div><h3 style="color:var(--bad)">Baris yang tidak akan diimpor (${prob.length})</h3><div class="tw"><table class="t"><thead><tr><th>Baris</th><th>NIK</th><th>Nama</th><th>Masalah</th></tr></thead><tbody>${prob.map(r => `<tr><td>${r.row}</td><td class="mono">${esc(r.nik || '-')}</td><td>${esc(r.nama)}</td><td style="color:var(--bad)">${r.errs.map(esc).join('<br>')}</td></tr>`).join('')}</tbody></table></div></div>` : ''}
+  ${c('new') ? `<div><h3 style="color:var(--ok)">Profil baru (${c('new')})</h3><div class="tw"><table class="t"><thead><tr><th>Baris</th><th>NIK</th><th>Nama</th><th>Jabatan</th><th>Proyek</th><th>Peringatan</th></tr></thead><tbody>${R.filter(r => r.status === 'new').map(r => `<tr><td>${r.row}</td><td class="mono">${esc(r.nik)}</td><td>${esc(r.nama)}</td><td>${esc(r.vals.jobtitle)}</td><td>${esc(r.project || '')}</td><td style="color:var(--warn);font-size:12.5px">${r.warns.map(w => '• ' + esc(w)).join('<br>')}</td></tr>`).join('')}</tbody></table></div></div>` : ''}
+  ${c('update') ? `<div><h3 style="color:var(--brand-700)">Profil yang sudah ada (${c('update')})</h3><div class="tw"><table class="t"><thead><tr><th>Baris</th><th>NIK</th><th>Nama</th><th>Perubahan</th><th>Peringatan</th></tr></thead><tbody>${R.filter(r => r.status === 'update').map(r => `<tr><td>${r.row}</td><td class="mono">${esc(r.nik)}</td><td>${esc(r.nama)}</td><td class="chg" style="font-size:12.5px">${r.important.map(([f, o, n]) => `<div><b>${esc(lab(f))}</b>: <del>${esc(o || '(kosong)')}</del> → <ins>${esc(n)}</ins></div>`).join('')}${r.changes.length > r.important.length ? `<div class="sub" style="margin:0">Field lain berubah: ${r.changes.filter(f => !r.important.some(i => i[0] === f)).map(lab).join(', ')}</div>` : ''}${!r.changes.length ? '<span class="sub">Tidak ada perubahan</span>' : ''}</td><td style="color:var(--warn);font-size:12.5px">${r.warns.map(w => '• ' + esc(w)).join('<br>')}</td></tr>`).join('')}</tbody></table></div></div>` : ''}
+  ${a.newProjects.length ? `<div class="card"><h3>Penugasan proyek</h3><p class="sub" style="margin:0 0 8px">Proyek berikut <b>belum ada</b> di master proyek:</p><div class="actions">${a.newProjects.map(p => badge(p, 'b-warn')).join('')}</div></div>` : ''}
+  <form data-form="processimp" class="card stack"><h2>3. Konfirmasi</h2><p class="sub" style="margin:0">${c('new')} profil baru dan ${c('update')} profil akan disimpan. Baris invalid/duplikat dilewati dan masuk laporan kesalahan. Data yang tidak ada di file tidak dihapus; sel kosong tidak menghapus data lama.</p>
+    ${a.newProjects.length ? `<label class="check"><input type="checkbox" name="cp" value="1"> Buat ${a.newProjects.length} proyek baru di master proyek. (Bila tidak dicentang, penugasan ke proyek tersebut dilewati.)</label>` : ''}
+    ${c('new') ? `<label class="check"><input type="checkbox" name="ca" value="1"> Buat akun login untuk profil baru yang memiliki tanggal lahir (username = NIK, password awal = DDMMYY, wajib diganti saat login pertama).</label>` : ''}
+    <label class="check" style="font-weight:600"><input type="checkbox" name="ok" value="1"> Saya sudah meninjau preview dan ingin menyimpan data yang valid.</label>${errOf('ok') ? `<div class="ferr">${esc(errOf('ok'))}</div>` : ''}
+    <div class="actions"><button class="btn primary" ${c('new') + c('update') === 0 ? 'disabled' : ''}>Proses Import</button><button type="button" class="btn ghost" data-act="cancelimp">Batalkan import ini</button></div></form></div>`;
+}
+function viewImportResult() {
+  const b = S.lastResult;
+  return `<a class="back" href="#import" data-act="closeresult">← Import / Export</a>` + head('Hasil import', b.file, `<button class="btn secondary" data-act="nodl">Unduh Laporan Kesalahan</button>`) + `
+  <div class="card grid g4" style="margin-bottom:16px"><div><small class="sub">Total baris</small><div><b class="num">${b.total}</b></div></div><div><small class="sub">Profil baru</small><div><b class="num" style="color:var(--ok)">${b.created}</b></div></div><div><small class="sub">Diperbarui</small><div><b class="num" style="color:var(--brand-700)">${b.updated}</b></div></div><div><small class="sub">Gagal</small><div><b class="num" style="color:var(--bad)">${b.failed}</b></div></div>
+  <p class="help spanall" style="margin:0">Diproses ${fmtDT(b.at)} oleh ${esc(b.by)}${b.accs ? ` · ${b.accs} akun dibuat` : ''}</p></div>
+  <div class="stack">${b.failedRows.length ? `<div class="card"><h3 style="color:var(--bad)">Baris yang gagal (${b.failedRows.length})</h3>${b.failedRows.map(r => `<div style="font-size:13px">Baris ${r.row} · NIK ${esc(r.nik || '-')}: ${r.errs.map(esc).join(' ')}</div>`).join('')}</div>` : ''}
+  ${b.skipped.length ? `<div class="card"><h3 style="color:var(--bad)">Penugasan yang dilewati</h3>${b.skipped.map(s => `<div style="font-size:13px">${esc(s)}</div>`).join('')}</div>` : ''}
+  ${b.warnRows.length ? `<div class="card"><h3 style="color:var(--warn)">Peringatan (${b.warnRows.length})</h3>${b.warnRows.map(r => `<div style="font-size:13px">Baris ${r.row} · NIK ${esc(r.nik)}: ${r.warns.map(esc).join(' ')}</div>`).join('')}</div>` : ''}
+  <div><button class="btn primary" data-nav="karyawan">Lihat Data Karyawan</button></div></div>`;
+}
+
+/* ---------- CV ---------- */
+function checklist(e) {
+  const req = [['Name', !!e.nama], ['Sex', !!e.jk], ['Date of Birth', !!e.tgl_lahir], ['Citizen (kewarganegaraan)', !!e.kewarganegaraan], ['Position (job title)', !!e.jobtitle], ['Kontak: No. HP atau email', !!(e.hp || e.email)]];
+  const warn = [['Foto', !!e.foto], ['Pendidikan', e.education.length > 0], ['Tahun lulus pada semua pendidikan', e.education.every(d => d.year)], ['Pengalaman kerja', e.experiences.length > 0], ['Bahasa', e.languages.length > 0], ['TRAINING', e.trainings.length > 0]];
+  return { req, warn, ready: req.every(r => r[1]) };
+}
+function cvHTML(e) {
+  const pers = [['Name', e.nama], ['Sex', e.jk === 'Laki-laki' ? 'Male' : e.jk === 'Perempuan' ? 'Female' : ''], ['Date of Birth', cvDate(e.tgl_lahir)], ['Citizen', e.kewarganegaraan], ['Position', e.jobtitle], ['Phone', e.hp], ['Email', e.email], ['Language', e.languages.join(', ')]];
+  const edu = e.education.slice().sort((a, b) => (b.year || 0) - (a.year || 0));
+  const title = x => x.type === 'Selama bekerja' ? `${x.position} di ${x.project || x.company}` : `${x.position} di ${x.company}${x.project ? ' — ' + x.project : ''}`;
+  const trn = e.trainings.slice().sort((a, b) => (b.year || 0) - (a.year || 0));
+  return `<div class="cv"><div class="hdr"><img class="lg" src="${LOGO}" alt="Bukaka"><div class="ttl">CURRICULUM VITAE OF PERSONNEL</div>${e.foto ? `<img class="ph" src="${e.foto}" alt="">` : ''}</div>
+  <h4 class="hp">PERSONAL</h4><table class="pers">${pers.map(([l, v], i) => `<tr><td class="c1">${i + 1}.</td><td class="c2">${l}</td><td class="c3">:</td><td>${esc(v)}</td></tr>`).join('')}</table>
+  <h4 class="he">EDUCATION BACKGROUND</h4><div class="edu">${edu.map(d => `<p>${[d.year, CV_LEVEL[d.level] || d.level, d.major, d.institution].filter(Boolean).map(esc).join(' - ')}</p>`).join('') || '<p class="mu">-</p>'}</div>
+  <h4 class="hx">WORKING EXPERIENCES AND JOB RESPONSIBILITY</h4><table class="exp">${expSorted(e).map(x => `<tr><td class="xs">${my(x.sm, x.sy)}</td><td class="xd">s/d</td><td class="xe">${x.current ? 'Sekarang' : my(x.em, x.ey)}</td><td>${esc(title(x))}${x.resp ? `<div class="resp">${esc(x.resp)}</div>` : ''}</td></tr>`).join('') || '<tr><td class="mu">-</td></tr>'}</table>
+  <table class="trn"><thead><tr><th class="tn sj">TRAINING</th><th class="ty">TAHUN</th><th class="to">PENYELENGGARA</th></tr></thead><tbody>${trn.map(t => `<tr><td class="tn">${esc(t.name)}</td><td class="ty">${esc(t.year || '')}</td><td class="to">${esc(t.org || '')}</td></tr>`).join('') || '<tr><td class="tn mu">-</td><td></td><td></td></tr>'}</tbody></table></div>`;
+}
+function viewCvList() {
+  const q = S.cvq.toLowerCase(); const list = S.employees.filter(e => !q || e.nik.includes(q) || e.nama.toLowerCase().includes(q)).sort((a, b) => a.nama.localeCompare(b.nama)).slice(0, 25);
+  return head('CV Generator', 'Cari karyawan → periksa kelengkapan → preview → unduh PDF.') + `<div style="margin-bottom:14px">${field('cvq', '', S.cvq, { type: 'search', attrs: { placeholder: 'Cari NIK atau nama…', 'aria-label': 'Cari karyawan', 'data-cvq': '1' } })}</div>
+  <div id="cv-results"><div class="tw"><table class="t"><thead><tr><th>NIK</th><th>Nama</th><th>Jabatan</th><th>Kelengkapan</th><th class="r">Aksi</th></tr></thead><tbody>${list.map(e => { const c = checklist(e); return `<tr><td class="mono">${e.nik}</td><td>${esc(e.nama)}</td><td>${esc(e.jobtitle)}</td><td>${c.ready ? badge('Siap', 'b-ok') : badge('Data wajib kurang', 'b-bad')}</td><td class="r"><button class="btn primary sm" data-cv="${e.id}">Buka CV</button></td></tr>`; }).join('') || '<tr><td colspan="5" class="empty">Tidak ada karyawan ditemukan.</td></tr>'}</tbody></table></div></div>`;
+}
+function viewCv() {
+  const e = emp(S.cvId); const c = checklist(e);
+  return `<a class="back" href="#cv" data-nav="cv">← CV Generator</a>` + head('CV — ' + e.nama, 'NIK ' + e.nik, `<button class="btn secondary" data-open="${e.id}">Lengkapi Data</button><button class="btn primary" data-act="pdf" ${c.ready ? '' : 'disabled'}>Unduh PDF</button>`) + `
+  <div class="cvgrid"><div class="stack"><div class="card"><h3>Data wajib CV final</h3><ul class="ck">${c.req.map(([l, ok]) => `<li><span class="${ok ? 'y' : 'n'}">${ok ? '✔' : '✖'}</span><span class="${ok ? '' : 'n'}">${l}</span></li>`).join('')}</ul>${c.ready ? '' : '<div class="alert a-bad" style="margin-top:10px;font-size:12.5px">Unduhan diblokir sampai data wajib lengkap. Sistem tidak mengisi nilai yang kosong.</div>'}</div>
+  <div class="card"><h3>Peringatan kelengkapan</h3><ul class="ck">${c.warn.map(([l, ok]) => `<li><span class="${ok ? 'y' : 'w'}">${ok ? '✔' : '!'}</span><span>${l}${ok ? '' : ' — belum ada'}</span></li>`).join('')}</ul><p class="help">Bagian yang kosong ditampilkan "-" pada CV.</p></div>
+  <div class="card help" style="margin:0">KTP, BPJS, NPWP, KK, nama ibu, agama, golongan darah, tinggi/berat badan, status nikah, alamat, dan PTKP tidak pernah dicetak pada CV.</div></div>
+  <div class="cv-stage" id="cv-stage"><div class="cv-scale" id="cv-scale">${cvHTML(e)}</div></div></div>`;
+}
+function fitCv() {
+  const st = document.getElementById('cv-stage'), sc = document.getElementById('cv-scale'); if (!st || !sc) return;
+  const w = st.clientWidth - 32; const s = Math.min(1, w / 816); sc.style.transform = `scale(${s})`; sc.style.width = '816px'; st.style.height = (sc.firstElementChild.offsetHeight * s + 32) + 'px';
+}
+
+/* ---------- akun & audit ---------- */
+function viewAccounts() {
+  const q = S.accq.toLowerCase(); const list = S.accounts.filter(a => !q || a.username.toLowerCase().includes(q) || accName(a).toLowerCase().includes(q));
+  const without = S.employees.filter(e => e.status === 'Aktif' && !accOf(e)); const noDob = without.filter(e => !e.tgl_lahir).length;
+  return head('Akun Pengguna', 'Username = NIK. Password tidak dapat dilihat HR; reset menghasilkan kredensial awal baru yang wajib diganti saat login.') + `
+  <div class="grid g2" style="margin-bottom:16px"><form data-form="addacc" class="card stack"><h2>Buat akun untuk karyawan</h2><div class="grid g2">${field('nik', 'NIK karyawan', dv('addacc', 'nik'), { req: true })}${field('role', 'Role', dv('addacc', 'role', 'Karyawan'), { options: ['HR', 'Karyawan'], placeholder: false })}</div><p class="help" style="margin:0">Karyawan: password awal = tanggal lahir (DDMMYY). HR: selalu password acak.</p><div><button class="btn primary">Buat Akun</button></div></form>
+  <div class="card stack"><h2>Buat akun massal</h2><p class="sub" style="margin:0"><b>${without.length}</b> karyawan aktif belum memiliki akun.${noDob ? ` ${noDob} di antaranya belum memiliki tanggal lahir dan akan dilewati.` : ''}</p><div><button class="btn secondary" data-act="bulk" ${without.length - noDob <= 0 ? 'disabled' : ''}>Buat Akun Massal</button></div></div></div>
+  <div style="margin-bottom:12px">${field('accq', '', S.accq, { type: 'search', attrs: { placeholder: 'Cari NIK / nama…', 'aria-label': 'Cari akun', 'data-accq': '1' } })}</div>
+  <div class="tw"><table class="t"><thead><tr><th>Username</th><th>Nama</th><th>Role</th><th>Status</th><th>Login terakhir</th><th>Password</th><th class="r">Aksi</th></tr></thead><tbody>
+  ${list.map(a => `<tr><td class="mono">${esc(a.username)}</td><td>${esc(accName(a))}</td><td>${a.role}</td><td>${stBadge(a.status)}</td><td class="nw">${fmtDT(a.last)}</td><td>${a.must ? badge('belum diganti', 'b-warn') : badge('sudah diganti', 'b-ok')}</td><td class="r nw"><button class="btn ghost sm" data-act="reset" data-id="${a.id}">Reset password</button>${a.id !== S.user.id ? `<button class="btn ghost sm ${a.status === 'Aktif' ? 'red' : ''}" data-act="acctoggle" data-id="${a.id}">${a.status === 'Aktif' ? 'Nonaktifkan' : 'Aktifkan'}</button>` : ''}</td></tr>`).join('')}</tbody></table></div>`;
+}
+function viewAudit() {
+  return head('Audit Log', 'Catatan perubahan dan kejadian keamanan selama sesi demo ini. Hanya nama field yang dicatat, bukan nilainya.') + `<div class="tw"><table class="t"><thead><tr><th>Waktu</th><th>Pelaku</th><th>Entitas</th><th>ID</th><th>Aksi</th><th>Field</th></tr></thead><tbody>
+  ${S.audit.map(l => `<tr><td class="nw">${fmtDT(l.t)}</td><td>${esc(l.actor)}</td><td>${esc(l.entity)}</td><td class="num">${l.id ?? ''}</td><td>${badge(l.action, l.action === 'Login-security-event' ? 'b-bad' : '')}</td><td style="font-size:12.5px;color:var(--muted)">${esc(l.fields.join(', '))}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">Belum ada catatan. Lakukan perubahan apa pun, lalu kembali ke sini.</td></tr>'}</tbody></table></div>`;
+}
+
+/* ---------- render ---------- */
+function render() {
+  const app = document.getElementById('app');
+  const bar = `<div class="demo-bar"><span><b>MODE DEMO</b> · semua data fiktif dan hanya tersimpan sementara di browser ini. Muat ulang halaman = data kembali ke awal.</span>${S.user ? '<button data-act="resetdemo">Reset demo</button>' : ''}</div>`;
+  let html;
+  if (!S.user) html = viewLogin();
+  else if (S.user.must) html = viewChangePw();
+  else {
+    const v = S.view; const hr = S.user.role === 'HR';
+    const inner = !hr ? viewPortal() : v === 'dashboard' ? viewDashboard() : v === 'karyawan' ? viewEmployees() : v === 'baru' ? viewNewEmployee() : v === 'detail' ? viewDetail() : v === 'proyek' ? viewProjects() : v === 'import' ? viewImport() : v === 'cv' ? viewCvList() : v === 'cvdetail' ? viewCv() : v === 'akun' ? viewAccounts() : v === 'audit' ? viewAudit() : v === 'saya' ? viewPortal() : viewDashboard();
+    html = viewShell(inner);
+  }
+  const modal = S.modal ? `<div class="modal-wrap" data-act="modalbg"><div class="modal" role="dialog" aria-modal="true"><h2>${esc(S.modal.title)}</h2><p class="sub" style="font-size:13.5px">${S.modal.body}</p><div class="actions" style="justify-content:flex-end;margin-top:16px">${S.modal.onOk ? '<button class="btn secondary" data-act="modalno">Batal</button>' : ''}<button class="btn ${S.modal.danger ? 'danger' : 'primary'}" data-act="modalok">${esc(S.modal.label || 'OK')}</button></div></div></div>` : '';
+  app.innerHTML = bar + html + modal + (S.toast ? `<div class="toast" role="status">${esc(S.toast)}</div>` : '');
+  if (S.view === 'cvdetail') requestAnimationFrame(fitCv);
+  if (S.focus) { const el = document.getElementById(S.focus); if (el) { el.focus(); const n = el.value.length; try { el.setSelectionRange(n, n); } catch (_) { } } S.focus = null; }
+}
+function go(view, opts = {}) {
+  S.view = view; S.menu = false; S.errs = {}; S.formKey = null; S.draft = null; S.flash = opts.flash || null; S.addExp = false; S.editExp = null; S.expState = null;
+  if (opts.id) S.detailId = opts.id; if (opts.tab) S.tab = opts.tab;
+  const h = view === 'detail' ? 'detail-' + S.detailId : view === 'cvdetail' ? 'cv-' + S.cvId : view;
+  if (location.hash !== '#' + h) history.replaceState(null, '', '#' + h);
+  render(); window.scrollTo(0, 0);
+}
+const flash = (m, c = 'a-ok') => { S.flash = [m, c]; S.draft = null; S.formKey = null; S.errs = {}; };
+
+/* ---------- interaksi ---------- */
+document.addEventListener('click', ev => {
+  const t = ev.target.closest('[data-nav],[data-open],[data-cv],[data-act],[data-tabbtn]'); if (!t) return;
+  if (t.matches('input[type=checkbox]')) return;
+  if (t.dataset.nav) { ev.preventDefault(); if (t.dataset.filter) { S.f = { q: '', status: t.dataset.filter, project: '', kontrak: '', page: 1 }; } S.lastResult = t.dataset.nav === 'import' ? null : S.lastResult; go(t.dataset.nav); return; }
+  if (t.dataset.open) { ev.preventDefault(); go('detail', { id: Number(t.dataset.open), tab: t.dataset.tab || 'identitas' }); return; }
+  if (t.dataset.cv) { ev.preventDefault(); S.cvId = Number(t.dataset.cv); go('cvdetail'); return; }
+  if (t.dataset.tabbtn) { S.tab = t.dataset.tabbtn; S.errs = {}; S.flash = null; S.addExp = false; S.editExp = null; S.expState = null; render(); return; }
+  const a = t.dataset.act; const id = Number(t.dataset.id);
+  const E = () => emp(S.detailId);
+  switch (a) {
+    case 'togglepw': { const i = document.getElementById('f-password'); i.type = i.type === 'password' ? 'text' : 'password'; t.textContent = i.type === 'password' ? 'Tampilkan' : 'Sembunyikan'; break; }
+    case 'quick': doLogin(t.dataset.u, t.dataset.p); break;
+    case 'logout': S.user = null; S.loginErr = null; S.view = 'dashboard'; history.replaceState(null, '', '#'); render(); break;
+    case 'menu': S.menu = true; render(); break;
+    case 'closemenu': S.menu = false; render(); break;
+    case 'resetdemo': confirmBox('Reset demo?', 'Semua perubahan selama sesi ini dihapus dan data kembali ke kondisi awal.', 'Reset', () => location.reload()); break;
+    case 'modalno': S.modal = null; render(); break;
+    case 'modalbg': if (ev.target === t) { S.modal = null; render(); } break;
+    case 'modalok': { const m = S.modal; S.modal = null; if (m.onOk) m.onOk(); else render(); break; }
+    case 'page': S.f.page += Number(t.dataset.d); document.getElementById('emp-results').innerHTML = empRows(); break;
+    case 'resetf': S.f = { q: '', status: '', project: '', kontrak: '', page: 1 }; render(); break;
+    case 'newemp': go('baru'); break;
+    case 'deact': { const e = emp(id); confirmBox('Nonaktifkan karyawan?', `${esc(e.nama)} dinonaktifkan. Data tetap tersimpan dan akun login ikut dinonaktifkan.`, 'Nonaktifkan', () => { e.status = 'Nonaktif'; const ac = accOf(e); if (ac) ac.status = 'Nonaktif'; log('employee', e.id, 'Deactivate', ['status_karyawan']); flash('Karyawan dinonaktifkan. Data tetap tersimpan; akun login ikut dinonaktifkan.'); render(); }, true); break; }
+    case 'react': { const e = emp(id); e.status = 'Aktif'; log('employee', e.id, 'Update', ['status_karyawan']); flash('Karyawan diaktifkan kembali. Aktifkan akunnya di menu Akun Pengguna bila diperlukan.'); render(); break; }
+    case 'endasg': { const as = E().assignments.find(x => x.id === id); as.status = 'Selesai'; as.end = as.end || iso(TODAY); log('employee_project', id, 'Update', ['assignment_status', 'assignment_end']); flash('Penugasan ditandai selesai. Riwayat tetap tersimpan.'); render(); break; }
+    case 'reactasg': { const as = E().assignments.find(x => x.id === id); as.status = 'Aktif'; as.end = ''; log('employee_project', id, 'Update', ['assignment_status']); render(); break; }
+    case 'deledu': { const e = E(); e.education = e.education.filter(x => x.id !== id); log('employee_education', id, 'Delete'); flash('Riwayat pendidikan dihapus.'); render(); break; }
+    case 'dellang': { const e = E(); e.languages.splice(Number(t.dataset.i), 1); log('employee_language', e.id, 'Delete'); render(); break; }
+    case 'deltrn': { const e = E(); e.trainings = e.trainings.filter(x => x.id !== id); log('training_certification', id, 'Delete'); flash('TRAINING dihapus.'); render(); break; }
+    case 'delfoto': { const e = E(); e.foto = null; log('employee', e.id, 'Update', ['foto_path']); flash('Foto profil dihapus.'); render(); break; }
+    case 'addexp': S.addExp = true; S.editExp = null; S.errs = {}; S.expState = null; render(); break;
+    case 'canceladd': S.addExp = false; S.errs = {}; S.expState = null; render(); break;
+    case 'editexp': S.editExp = S.editExp === id ? null : id; S.addExp = false; S.errs = {}; S.formKey = null; S.draft = null; S.expState = null; render(); break;
+    case 'archexp': { const e = emp(Number(t.dataset.emp)); confirmBox('Arsipkan pengalaman?', 'Pengalaman tidak tampil lagi di CV. Di aplikasi asli data diarsipkan (soft delete) dan tercatat di audit log.', 'Arsipkan', () => { e.experiences = e.experiences.filter(x => x.id !== id); log('work_experience', id, 'SoftDelete'); flash('Pengalaman kerja diarsipkan.'); render(); }, true); break; }
+    case 'prjtoggle': {
+      const p = prj(id); const n = S.employees.reduce((s, e) => s + e.assignments.filter(x => x.projectId === id && x.status === 'Aktif').length, 0);
+      const doIt = () => { p.status = p.status === 'Aktif' ? 'Nonaktif' : 'Aktif'; log('project', id, p.status === 'Nonaktif' ? 'Deactivate' : 'Update', ['status']); flash('Proyek diperbarui.'); render(); };
+      if (p.status === 'Aktif' && n > 0) confirmBox('Proyek masih dipakai', `Proyek ini masih memiliki ${n} penugasan aktif. Tetap nonaktifkan? Riwayat penugasan tidak dihapus.`, 'Tetap nonaktifkan', doIt, true); else doIt();
+      break;
+    }
+    case 'sample': S.importErr = null; S.preview = { file: 'contoh_master_data_karyawan.xlsx (3 baris file Anda + 4 baris contoh validasi)', analysis: analyzeRows(sampleRows(), 'masterKaryawan edited') }; render(); window.scrollTo(0, 0); break;
+    case 'cancelimp': ev.preventDefault(); S.preview = null; flash('Import dibatalkan. Tidak ada data yang disimpan.'); render(); break;
+    case 'closeresult': ev.preventDefault(); S.lastResult = null; S.flash = null; render(); break;
+    case 'nodl': toast('Di aplikasi asli tombol ini mengunduh file. Halaman demo tidak dapat mengunduh file.'); break;
+    case 'pdf': log('employee', S.cvId, 'GenerateCV'); toast('Di aplikasi asli tombol ini mengunduh PDF dengan tata letak yang sama seperti pratinjau.'); break;
+    case 'bulk': { let n = 0; S.employees.filter(e => e.status === 'Aktif' && !accOf(e) && e.tgl_lahir).forEach(e => { S.accounts.push({ id: nextId(), username: e.nik, role: 'Karyawan', employeeId: e.id, pw: ddmmyy(e.tgl_lahir), must: true, status: 'Aktif', last: null }); n++; }); log('user_account', null, 'Create', [`massal ${n} akun`]); flash(`${n} akun karyawan dibuat. Password awal = tanggal lahir (DDMMYY), wajib diganti saat login pertama.`); render(); break; }
+    case 'reset': { const ac = S.accounts.find(x => x.id === id); const e = ac.employeeId && emp(ac.employeeId); let msg; if (ac.role === 'Karyawan' && e && e.tgl_lahir) { ac.pw = ddmmyy(e.tgl_lahir); msg = `Password awal ${esc(ac.username)} = tanggal lahir (DDMMYY). Pengguna wajib menggantinya saat login.`; } else { ac.pw = Math.random().toString(36).slice(2, 12); msg = `Password sementara: <span class="cred">${esc(ac.pw)}</span><br>Hanya ditampilkan sekali. Sampaikan secara pribadi.`; } ac.must = true; log('user_account', ac.id, 'PasswordReset'); S.modal = { title: 'Password direset', body: msg, label: 'Selesai' }; render(); break; }
+    case 'acctoggle': { const ac = S.accounts.find(x => x.id === id); ac.status = ac.status === 'Aktif' ? 'Nonaktif' : 'Aktif'; log('user_account', id, ac.status === 'Nonaktif' ? 'Deactivate' : 'Update', ['account_status']); flash(`Akun ${ac.username} sekarang ${ac.status}.`); render(); break; }
+  }
+});
+document.addEventListener('change', ev => {
+  const t = ev.target;
+  if (t.matches('[data-act=weak]')) { S.weak = t.checked; return; }
+  if (t.matches('[data-current]')) { const box = t.closest('form').querySelector('[data-endbox]'); box.hidden = t.checked; return; }
+  if (t.matches('[data-filter-input]') && t.tagName === 'SELECT') { S.f[t.dataset.filterInput] = t.value; S.f.page = 1; document.getElementById('emp-results').innerHTML = empRows(); return; }
+  if (t.matches('[data-photo]')) {
+    const f = t.files[0]; const e = emp(Number(t.dataset.photo)); S.errs = {};
+    if (!f) return; if (!['image/jpeg', 'image/png'].includes(f.type)) { S.errs.foto = 'Foto harus berformat JPG atau PNG.'; render(); return; }
+    if (f.size > 2 * 1024 * 1024) { S.errs.foto = 'Ukuran foto maksimal 2 MB.'; render(); return; }
+    const rd = new FileReader(); rd.onload = () => { e.foto = rd.result; log('employee', e.id, 'Update', ['foto_path']); flash('Foto profil disimpan.'); render(); }; rd.readAsDataURL(f); return;
+  }
+  if (t.matches('[data-xlsx]')) {
+    const f = t.files[0]; if (!f) return; S.importErr = null;
+    if (!window.XLSX) { S.importErr = 'Pustaka pembaca Excel gagal dimuat (periksa koneksi). Gunakan tombol "Coba dengan contoh file master lama".'; render(); return; }
+    if (f.size > 10 * 1024 * 1024) { S.importErr = 'Ukuran file maksimal 10 MB.'; render(); return; }
+    const rd = new FileReader(); rd.onload = () => {
+      try {
+        const wb = XLSX.read(new Uint8Array(rd.result), { type: 'array' }); const name = wb.SheetNames.includes('Karyawan') ? 'Karyawan' : wb.SheetNames[0];
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, raw: true, defval: null });
+        const an = analyzeRows(rows, name); if (an.fatal) { S.importErr = 'File tidak dapat diproses: ' + an.fatal; render(); return; }
+        S.preview = { file: f.name, analysis: an }; render(); window.scrollTo(0, 0);
+      } catch (err) { S.importErr = 'File tidak dapat dibaca sebagai Excel.'; render(); }
+    }; rd.readAsArrayBuffer(f);
+  }
+});
+document.addEventListener('input', ev => {
+  const t = ev.target;
+  if (t.matches('[data-filter-input]') && t.tagName === 'INPUT') { S.f.q = t.value; S.f.page = 1; document.getElementById('emp-results').innerHTML = empRows(); }
+  if (t.matches('[data-cvq]')) { S.cvq = t.value; S.focus = t.id; render(); }
+  if (t.matches('[data-accq]')) { S.accq = t.value; S.focus = t.id; render(); }
+});
+window.addEventListener('resize', fitCv);
+
+function doLogin(u, p) {
+  const ac = S.accounts.find(a => a.username === u.trim());
+  S.fails = S.fails || {}; const key = u.trim().toLowerCase();
+  if ((S.fails[key] || 0) >= 5) { S.loginErr = 'Terlalu banyak percobaan login. Coba lagi dalam 300 detik.'; render(); return; }
+  if (!ac || ac.pw !== p || ac.status !== 'Aktif') {
+    S.fails[key] = (S.fails[key] || 0) + 1; if (S.fails[key] === 5) log('security', null, 'Login-security-event', ['login_locked']);
+    S.loginErr = 'Username atau password salah, atau akun tidak aktif.'; S.loginUser = u; render(); return;
+  }
+  S.fails[key] = 0; S.loginErr = null; S.user = ac; ac.last = new Date();
+  S.view = ac.role === 'HR' ? 'dashboard' : 'saya'; S.flash = null; render();
+}
+
+document.addEventListener('submit', ev => {
+  ev.preventDefault(); const form = ev.target; const kind = form.dataset.form; const d = formData(form); S.errs = {};
+  if (kind !== 'saveexp') { S.formKey = kind; S.draft = d; }
+  const E = () => emp(S.detailId);
+  if (kind === 'login') { S.draft = null; S.formKey = null; if (!d.username || !d.password) { S.loginErr = 'Username dan password wajib diisi.'; S.loginUser = d.username; render(); return; } doLogin(d.username, d.password); return; }
+  if (kind === 'changepw') {
+    const u = S.user; const e = u.employeeId && emp(u.employeeId); const dob = e ? ddmmyy(e.tgl_lahir) : null;
+    if (d.current !== u.pw) S.errs.current = 'Password lama salah.';
+    else if (d.pw.length < 8 || !/[a-zA-Z]/.test(d.pw) || !/\d/.test(d.pw)) S.errs.pw = 'Password minimal 8 karakter dan mengandung huruf serta angka.';
+    else if ((dob && d.pw.includes(dob)) || d.pw.includes(u.username)) S.errs.pw = 'Password baru tidak boleh memuat tanggal lahir atau NIK Anda.';
+    else if (d.pw === d.current) S.errs.pw = 'Password baru harus berbeda dari password lama.';
+    else if (d.pw !== d.pw2) S.errs.pw2 = 'Konfirmasi password tidak cocok.';
+    if (Object.keys(S.errs).length) { render(); return; }
+    u.pw = d.pw; u.must = false; log('user_account', u.id, 'PasswordChange'); S.view = u.role === 'HR' ? 'dashboard' : 'saya'; flash('Password berhasil diganti.'); render(); return;
+  }
+  if (kind === 'newemp') {
+    const er = validateEmployee(d, null, [...F_ID, ...F_JOB]); if (Object.keys(er).length) { S.errs = er; S.draft = d; render(); window.scrollTo(0, 0); return; }
+    const e = { id: nextId(), ...d, status: 'Aktif', foto: null, education: [], languages: [], trainings: [], experiences: [], assignments: [], created: new Date(), updated: new Date() };
+    S.employees.push(e); log('employee', e.id, 'Create', Object.keys(d).filter(k => d[k])); S.draft = null;
+    go('detail', { id: e.id, tab: 'pendidikan', flash: [`Profil ${e.nama} berhasil dibuat. Lanjutkan mengisi pendidikan, foto, dan TRAINING.`, 'a-ok'] }); return;
+  }
+  if (kind === 'saveid' || kind === 'savejob') {
+    const e = E(); const fields = kind === 'saveid' ? F_ID : F_JOB; const er = validateEmployee(d, e, fields);
+    if (Object.keys(er).length) { S.errs = er; render(); return; }
+    const changed = fields.filter(f => String(e[f] ?? '') !== String(d[f] ?? '')); Object.assign(e, d); e.updated = new Date();
+    if (changed.length) log('employee', e.id, 'Update', changed); flash(changed.length ? 'Perubahan tersimpan.' : 'Tidak ada perubahan.'); render(); return;
+  }
+  if (kind === 'addasg') {
+    const e = E(); if (!d.projectId) { S.errs.projectId = 'Proyek wajib dipilih.'; render(); return; }
+    if (d.end && d.start && d.end < d.start) { S.errs.end = 'Tanggal selesai tidak boleh sebelum tanggal mulai.'; render(); return; }
+    if (e.assignments.some(x => x.projectId === Number(d.projectId) && (x.start || '') === (d.start || ''))) { S.errs.projectId = 'Penugasan ke proyek ini dengan tanggal mulai yang sama sudah ada.'; render(); return; }
+    const as = { id: nextId(), projectId: Number(d.projectId), start: d.start, end: d.end, status: d.status }; e.assignments.push(as); log('employee_project', as.id, 'Create', ['project_id', 'assignment_status']); flash('Penugasan proyek ditambahkan.'); render(); return;
+  }
+  if (kind === 'addedu') {
+    const e = E(); if (!d.level) S.errs.level = 'Jenjang wajib diisi.'; if (!d.institution) S.errs.institution = 'Institusi wajib diisi.';
+    if (d.year && (Number(d.year) < 1950 || Number(d.year) > nowYear)) S.errs.year = `Tahun lulus harus antara 1950 dan ${nowYear}.`;
+    if (Object.keys(S.errs).length) { render(); return; }
+    const ed = { id: nextId(), level: d.level, major: d.major, institution: d.institution, year: d.year ? Number(d.year) : null }; e.education.push(ed); log('employee_education', ed.id, 'Create', ['level', 'institution']); flash('Riwayat pendidikan ditambahkan.'); render(); return;
+  }
+  if (kind === 'addlang') {
+    const e = E(); const name = d.choice === 'Lainnya' ? d.other : d.choice;
+    if (!d.choice) S.errs.choice = 'Pilih bahasa.'; else if (!name) S.errs.other = 'Tulis nama bahasa bila memilih Lainnya.'; else if (e.languages.some(l => l.toLowerCase() === name.toLowerCase())) S.errs.choice = `Bahasa ${name} sudah tercatat.`;
+    if (Object.keys(S.errs).length) { render(); return; }
+    e.languages.push(name); log('employee_language', e.id, 'Create', ['language_name']); flash(`Bahasa ${name} ditambahkan.`); render(); return;
+  }
+  if (kind === 'addtrn') {
+    const e = E(); if (!d.type) S.errs.type = 'Jenis wajib diisi.'; if (!d.name) S.errs.name = 'Nama training wajib diisi.'; if (d.issue && d.expiry && d.expiry < d.issue) S.errs.expiry = 'Tanggal kedaluwarsa tidak boleh sebelum tanggal terbit.';
+    if (Object.keys(S.errs).length) { render(); return; }
+    const tr = { id: nextId(), type: d.type, name: d.name, year: d.year ? Number(d.year) : null, org: d.org, cert: d.cert, issue: d.issue, expiry: d.expiry }; e.trainings.push(tr); log('training_certification', tr.id, 'Create', ['item_type', 'item_name']); flash('TRAINING ditambahkan.'); render(); return;
+  }
+  if (kind === 'addprj') {
+    if (!d.name) S.errs.name = 'Nama proyek wajib diisi.'; else if (S.projects.some(p => p.name.toLowerCase() === d.name.toLowerCase())) S.errs.name = 'Nama proyek sudah ada.';
+    if (d.code && S.projects.some(p => (p.code || '').toLowerCase() === d.code.toLowerCase())) S.errs.code = 'Kode proyek sudah dipakai.';
+    if (Object.keys(S.errs).length) { render(); return; }
+    const p = { id: nextId(), code: d.code, name: d.name, status: 'Aktif' }; S.projects.push(p); log('project', p.id, 'Create', ['project_name']); flash(`Proyek ${p.name} ditambahkan.`); render(); return;
+  }
+  if (kind === 'addacc') {
+    const e = S.employees.find(x => x.nik === d.nik);
+    if (!d.nik) S.errs.nik = 'NIK wajib diisi.'; else if (!e) S.errs.nik = 'NIK tidak ditemukan pada data karyawan.'; else if (accOf(e)) S.errs.nik = 'Karyawan ini sudah memiliki akun.';
+    if (Object.keys(S.errs).length) { render(); return; }
+    let pw, msg; if (d.role === 'Karyawan' && e.tgl_lahir) { pw = ddmmyy(e.tgl_lahir); msg = 'Password awal = tanggal lahir (DDMMYY).'; } else { pw = Math.random().toString(36).slice(2, 12); msg = `Password sementara: <span class="cred">${pw}</span> — hanya ditampilkan sekali.`; }
+    const ac = { id: nextId(), username: e.nik, role: d.role, employeeId: e.id, pw, must: true, status: 'Aktif', last: null }; S.accounts.push(ac); log('user_account', ac.id, 'Create', ['username', 'role']);
+    S.draft = null; S.formKey = null; S.modal = { title: `Akun ${e.nik} dibuat`, body: msg + ' Pengguna wajib mengganti password saat login pertama.', label: 'Selesai' }; render(); return;
+  }
+  if (kind === 'processimp') { if (!d.ok) { S.errs.ok = 'Centang konfirmasi sebelum memproses import.'; render(); return; } applyImport(!!d.cp, !!d.ca); flash('Import selesai diproses.'); render(); window.scrollTo(0, 0); return; }
+  if (kind === 'saveexp') saveExperience(form, d);
+});
+
+async function saveExperience(form, d) {
+  const key = form.dataset.key; const e = emp(Number(form.dataset.emp)); const xid = form.dataset.id ? Number(form.dataset.id) : null;
+  const v = { type: d.type, position: d.position, company: d.company, project: d.project, sm: Number(d.sm) || null, sy: Number(d.sy) || null, current: !!d.current, em: d.current ? null : (Number(d.em) || null), ey: d.current ? null : (Number(d.ey) || null), resp: d.resp, confirm_future: !!d.confirm_future };
+  S.formKey = key; S.draft = v;
+  const er = validateExperience(v);
+  if (Object.keys(er).length) { S.errs = er; S.expState = { key, cls: 's-bad', msg: 'Belum tersimpan — periksa isian yang ditandai merah.' }; render(); return; }
+  S.errs = {};
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    S.expState = { key, busy: true, cls: 's-busy', msg: attempt === 1 ? 'Menyimpan…' : `Koneksi bermasalah, mencoba kembali (${attempt}/4)…` }; render();
+    await new Promise(r => setTimeout(r, attempt === 1 ? 600 : 1300));
+    const fail = S.weak && attempt <= 2;
+    if (!fail) {
+      const rec = { type: v.type, position: v.position, company: v.company, project: v.project, sm: v.sm, sy: v.sy, em: v.em, ey: v.ey, current: v.current, resp: v.resp, by: actor(), at: new Date() };
+      if (xid) { Object.assign(e.experiences.find(x => x.id === xid), rec); log('work_experience', xid, 'Update', ['position', 'company_name', 'periode']); }
+      else { const nx = { id: nextId(), ...rec }; e.experiences.push(nx); log('work_experience', nx.id, 'Create', ['experience_type', 'company_name', 'position', 'periode']); }
+      S.addExp = false; S.editExp = null; S.formKey = null; S.draft = null; S.expState = null; flash(xid ? 'Perubahan pengalaman kerja tersimpan.' : 'Pengalaman kerja tersimpan.'); render(); window.scrollTo(0, 0); return;
+    }
+  }
+}
+
+function fromHash() {
+  const h = location.hash.slice(1);
+  if (!S.user || S.user.must || !h) return;
+  let m;
+  if ((m = h.match(/^detail-(\d+)$/)) && emp(Number(m[1]))) { S.detailId = Number(m[1]); S.view = 'detail'; }
+  else if ((m = h.match(/^cv-(\d+)$/)) && emp(Number(m[1]))) { S.cvId = Number(m[1]); S.view = 'cvdetail'; }
+  else if (['dashboard', 'karyawan', 'baru', 'proyek', 'import', 'cv', 'akun', 'audit', 'saya'].includes(h)) S.view = h;
+  render();
+}
+window.addEventListener('hashchange', fromHash);
+seedData(); render();
+})();
+</script>
+
+</body>
+</html>
