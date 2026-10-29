@@ -2,6 +2,7 @@ name: tests
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
@@ -16,7 +17,7 @@ jobs:
           POSTGRES_DB: mk_test
         ports: ['5432:5432']
         options: >-
-          --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+          --health-cmd "pg_isready -U mk -d mk_test" --health-interval 10s --health-timeout 5s --health-retries 5
     strategy:
       matrix:
         db: [sqlite, pgsql]
