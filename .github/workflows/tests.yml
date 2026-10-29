@@ -1,0 +1,42 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: mk
+          POSTGRES_PASSWORD: mk_ci_pw
+          POSTGRES_DB: mk_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U mk -d mk_test" --health-interval 10s --health-timeout 5s --health-retries 5
+    strategy:
+      matrix:
+        db: [sqlite, pgsql]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: gd, zip, intl, mbstring, pdo_sqlite, pdo_pgsql
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: cp .env.example .env && php artisan key:generate
+      - run: vendor/bin/pint --test
+      - name: Run tests
+        run: php artisan test
+        env:
+          DB_CONNECTION: ${{ matrix.db }}
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: ${{ matrix.db == 'pgsql' && 'mk_test' || ':memory:' }}
+          DB_USERNAME: mk
+          DB_PASSWORD: mk_ci_pw

@@ -1,0 +1,36 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../views/**/*.blade.php';
+
+@theme {
+    --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+    --color-brand-50: #e8f3f9;
+    --color-brand-100: #cfe5f1;
+    --color-brand-500: #1a7db0;
+    --color-brand-600: #006599;
+    --color-brand-700: #00527c;
+    --color-brand-800: #003f60;
+}
+
+@layer components {
+    .btn { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50; }
+    .btn-primary { @apply bg-brand-600 text-white hover:bg-brand-700; }
+    .btn-secondary { @apply border border-slate-300 bg-white text-slate-700 hover:bg-slate-50; }
+    .btn-danger { @apply bg-red-600 text-white hover:bg-red-700; }
+    .btn-ghost { @apply text-brand-700 hover:bg-brand-50; }
+    .btn-sm { @apply min-h-9 px-3 py-1.5 text-xs; }
+    .input { @apply block w-full min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none sm:text-sm; }
+    .input-error { @apply border-red-500 focus:border-red-500 focus:ring-red-100; }
+    .label { @apply mb-1 block text-sm font-medium text-slate-700; }
+    .card { @apply rounded-xl border border-slate-200 bg-white shadow-sm; }
+    .table-wrap { @apply overflow-x-auto rounded-xl border border-slate-200 bg-white; }
+    .table { @apply min-w-full divide-y divide-slate-200 text-sm; }
+    .table th { @apply bg-slate-50 px-3 py-2.5 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase; }
+    .table td { @apply px-3 py-2.5 align-top text-slate-700; }
+    .badge { @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap; }
+    .link { @apply font-medium text-brand-700 hover:underline; }
+}
+
+[x-cloak] { display: none !important; }
